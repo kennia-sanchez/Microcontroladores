@@ -1,0 +1,167 @@
+; Proyecto Final Primer Pre-Reporte 
+; Simon Dice 
+       
+#include "p18f45k50.inc"
+org 0x00
+    
+    #define RS LATA, 1, A
+    #define E LATA, 2, A
+    #define RW LATA, 3, A
+    #define dataLCD LATD, A
+    
+goto start
+org 0x20
+    
+start
+    clrf TRISA, A
+    clrf TRISD, A
+
+ComandosLCD
+    movlw b'00111000' 
+    call Configuracion
+    movlw b'00001111' 
+    call Configuracion
+    movlw b'00000110' 
+    call Configuracion
+    movlw b'00000001' 
+    call Configuracion
+    
+    call Menu
+    call HighScore
+    call Timeout
+    goto final
+    
+Menu
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    
+    movlw b'11001110'
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+HighScore
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+Timeout
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'M'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'U'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+loop goto loop
+
+Configuracion
+    bcf RS 
+    bcf RW 
+    bsf E 
+    movwf dataLCD 
+    nop
+
+    bcf E
+    call esperaLCD
+    return
+
+Escribir  
+    bsf RS 
+    bcf RW 
+    bsf E 
+    movwf dataLCD 
+    nop
+    bcf E 
+    call esperaLCD 
+    return
+    
+
+esperaLCD
+    nop
+    return
+    
+final
+    end
