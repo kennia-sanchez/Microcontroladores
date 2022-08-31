@@ -1,0 +1,138 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+Cero	EQU	b'00111111'
+Uno	EQU	b'00000110'
+Dos	EQU	b'01011011'
+Tres	EQU	b'01001111'
+Cuatro	EQU	b'01100110'
+Cinco	EQU	b'01101101'
+Seis	EQU	b'01111101'
+Siete	EQU	b'00000111'
+Ocho	EQU	b'01111111'
+Nueve	EQU	b'01101111'
+ 
+goto start
+org 0x40
+	
+start
+    movlb .15
+    clrf ANSELB, BANKED
+    movlw b'10000000'
+    movwf TRISB, A
+    bcf INTCON2, .7, A
+    setf WPUB, A
+    clrf WREG, A 
+    
+Pulso1
+    btfss PORTB, .7, A 
+    goto Pulso1
+    goto Digito0
+    
+Digito0	
+    movlw Cero
+    movwf LATB, A
+    ;btfss PORTB, .7, A 
+    goto Pulso2
+    
+Pulso2
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso2
+    goto Digito1
+    
+Digito1
+    movlw Uno
+    movwf LATB, A
+    goto Pulso3
+    
+Pulso3
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso3
+    goto Digito2
+    
+Digito2
+    movlw Dos
+    movwf LATB, A
+    goto Pulso4 
+    
+Pulso4
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso4
+    goto Digito3
+    
+Digito3
+    movlw Tres
+    movwf LATB, A
+    goto Pulso5
+    
+Pulso5
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso5
+    goto Digito4
+    
+Digito4
+    movlw Cuatro
+    movwf LATB, A
+    goto Pulso6 
+    
+Pulso6
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso6
+    goto Digito5
+    
+Digito5
+    movlw Cinco
+    movwf LATB, A
+    goto Pulso7
+    
+Pulso7
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso7
+    goto Digito6
+    
+Digito6
+    movlw Seis
+    movwf LATB, A
+    goto Pulso8
+    
+Pulso8
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso8
+    goto Digito7
+    
+Digito7
+    movlw Siete
+    movwf LATB, A
+    goto Pulso9
+    
+Pulso9
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso9
+    goto Digito8
+    
+Digito8
+    movlw Ocho
+    movwf LATB, A
+    goto Pulso10
+    
+Pulso10
+    bcf PORTB, .7, A
+    btfss PORTB, .7, A
+    goto Pulso10
+    goto Digito9
+    
+Digito9
+    movlw Nueve
+    movwf LATB, A
+    goto Pulso1 
+    
+    
+    end
