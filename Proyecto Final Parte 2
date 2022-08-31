@@ -1,0 +1,456 @@
+#include "p18f45k50.inc"
+org 0x00   
+    #define RS LATA, 1, A
+    #define E LATA, 2, A
+    #define RW LATA, 3, A
+    #define dataLCD LATD, A
+    
+goto start
+org 0x20
+    
+start
+    clrf TRISA, A
+    clrf TRISD, A
+
+ComandosLCD
+    movlw b'00111000' 
+    call Configuracion
+    movlw b'00001111' 
+    call Configuracion
+    movlw b'00000110' 
+    call Configuracion
+    movlw b'00000001' 
+    call Configuracion
+    
+    call Menu
+    call HighScore
+    call Timeout
+    call XOXO
+    call DispCirculo
+    call DispTacha
+    goto final
+    
+Menu
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    
+    movlw b'11000000'
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+HighScore
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+Timeout
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'M'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'U'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    return
+    
+
+    
+ XOXO
+    movlw b'01000000'
+    call Configuracion
+    return
+    
+    
+Circulo1
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000011'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    return
+    
+Circulo2
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00011000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    return
+    
+Circulo3
+    movlw b'00001000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000011'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    return
+    
+Circulo4
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00011000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    return
+    
+Tacha1
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    return
+    
+Tacha2
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    return
+    
+Tacha3
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    return
+    
+Tacha4
+    movlw b'00010000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    return
+ 
+loop goto loop
+
+Configuracion
+    bcf RS 
+    bcf RW 
+    goto Enable
+    
+Escribir  
+    bsf RS 
+    bcf RW 
+    
+Enable
+    bsf E 
+    movwf dataLCD 
+    nop
+    bcf E 
+    call esperaLCD 
+    return
+     
+esperaLCD
+    nop
+    return
+    
+final
+    end
+    
+;    *********REVISION**********
+
+    movlb .15
+    clrf ANSELB, BANKED
+    clrf ANSELD, BANKED
+    bcf INTCON2, .7, A		; pullups globales
+    movlw b'00001111'
+    movwf TRISB, A		; teclas
+    movwf WPUB, A
+    clrf TRISD, A
+
+Revisar
+    checar0
+    btfsc PORTB, .0, A
+	call Prender5
+	goto checar1
+
+    checar1
+    btfsc PORTB, .1, A
+	call Prender4
+	goto checar2
+
+    checar2
+    btfss PORTB, .2, A
+	call Prender3
+	goto checar3
+
+    checar3
+    btfss PORTB, .3, A
+	call Prender2
+	goto checar0
+	
+
+    Prender2
+    call espera
+    bcf PORTD, .5, A
+    bcf PORTD, .4, A
+    bcf PORTD, .3, A
+    bsf PORTD, .2, A
+    return
+
+    Prender3
+    call espera
+    bcf PORTD, .5, A
+    bcf PORTD, .4, A
+    bsf PORTD, .3, A
+    bcf PORTD, .2, A
+    return
+
+    Prender4
+    call espera
+    bcf PORTD, .5, A
+    bsf PORTD, .4, A
+    bcf PORTD, .3, A
+    bcf PORTD, .2, A
+    return
+
+    Prender5
+    call espera
+    bsf PORTD, .5, A
+    bcf PORTD, .4, A
+    bcf PORTD, .3, A
+    bcf PORTD, .2, A
+    return
+    
+   ; ********ANIMACIONES*********
+    
+    DispCirculo
+	movlw b'10000111'   ; SET CURSOR
+	call Configuracion
+	MOVLW d'0' 
+	call Escribir
+	call espera1s
+
+	MOVLW d'1' 
+	call Escribir
+	call espera500ms
+	
+        movlw b'11000111'   ; SET CURSOR
+	call Configuracion
+	MOVLW d'2' 
+	call Escribir
+	call espera1s
+	
+	MOVLW d'3' 
+	call Escribir
+	call espera500ms
+	return
+    
+    DispTacha
+	movlw b'10000111'   ; SET CURSOR
+	call Configuracion
+	MOVLW d'4' 
+	call Escribir
+	call espera1s
+	
+
+	MOVLW d'5' 
+	call Escribir
+	call espera500ms
+	
+       movlw b'11000111'    ; SET CURSOR
+	call Configuracion
+	MOVLW d'6' 
+	call Escribir
+	call espera1s
+	
+
+	MOVLW d'7' 
+	call Escribir
+	call espera500ms
+	return
+    
+	; *******DELAYS*****
+espera500ms
+	clrf TMR1L, A
+	clrf TMR1H, A
+	bcf PIR1, 0 ,A
+	call espera
+	return
+espera1s
+	clrf TMR1L, A
+	clrf TMR1H, A
+	bcf PIR1, 0 ,A
+	call espera
+	call espera
+	return
+espera 
+	btfss PIR1, 0, A ; espera 524288 CI + 2CI del bcf PIR1 y 2 de return
+	goto espera
+	bcf PIR1, 0 ,A
+	return
+	
+;   *******PUNTAJES*****
