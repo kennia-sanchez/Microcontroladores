@@ -1,0 +1,57 @@
+#include "p18f45k50.inc"
+    
+Etiq0 EQU 0x30
+Etiq1 EQU 0x42
+Etiq2 EQU .2
+ 
+org 0x00
+    
+    
+start
+ 
+    clrf Etiq1, A
+    
+    btg Etiq1, .0, A
+    btg Etiq1, .1, A
+    btg Etiq1, .2, A
+    btg Etiq1, .3, A
+    btg Etiq1, .4, A
+    btg Etiq1, .5, A
+    btg Etiq1, .6, A
+    btg Etiq1, .7, A
+    
+    
+    btfss Etiq0, Etiq2, A	    ; Checa si el bit 2 esta en 0 ó 1
+    goto Menos_a_Mas
+    goto Mas_a_Menos
+    
+Menos_a_Mas
+    
+    btg Etiq1, .0, A
+    btg Etiq1, .1, A
+    btg Etiq1, .2, A
+    btg Etiq1, .3, A
+    btg Etiq1, .4, A
+    btg Etiq1, .5, A
+    btg Etiq1, .6, A
+    btg Etiq1, .7, A
+    
+    goto start
+    
+Mas_a_Menos
+    
+    btg Etiq1, .7, A
+    btg Etiq1, .6, A
+    btg Etiq1, .5, A
+    btg Etiq1, .4, A
+    btg Etiq1, .3, A
+    btg Etiq1, .2, A
+    btg Etiq1, .1, A
+    btg Etiq1, .0, A
+    
+    goto start
+    
+    
+    
+    nop
+    end
