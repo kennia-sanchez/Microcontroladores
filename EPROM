@@ -1,0 +1,121 @@
+#include "p18f45k50.inc"
+org 0x00
+    #define score 0x21, A
+    #define score_1 0x22, A
+    #define score_2 0x23, A
+    #define score_3 0x24, A
+    #define H_score 0x25, A
+    ; EEPROM -> 0x00	-> High Score
+    ; EEPROM -> 0x01	-> score 1
+    ; EEPROM -> 0x02	-> score 2
+    ; EEPROM -> 0x03	-> score 3
+    ; Registro -> 0x26	-> Guardar los datos de la EEPROM
+   
+    
+movlw .2
+movwf score
+    
+movlw .4
+movwf score_1
+    
+movlw .6
+movwf score_2
+  
+movlw .8
+movwf score_3
+    
+movlw .10
+movwf H_score
+    
+movlw .12
+movwf score
+
+movlw 0x01		    	
+call MOV_EEADR
+movf score_1, W
+call MOV_EEDATA
+call WRITE_EEPROM
+    
+movlw 0x02		    	
+call MOV_EEADR
+movf score_2, W
+call MOV_EEDATA
+call WRITE_EEPROM
+    
+movlw 0x03		    	
+call MOV_EEADR
+movf score_3, W
+call MOV_EEDATA
+call WRITE_EEPROM
+    
+goto start
+    
+start
+    
+    HIGH_SCORE
+	clrf W, A
+	movf score, W
+	subwf H_score, W
+	btfsc STATUS, N, A
+	    goto Escribe_HighScore
+	    goto Nuevo
+		
+    Escribe_HighScore
+	movlw 0x00		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+	
+		
+    Nuevo
+	movlw 0x03		    	
+	call MOV_EEADR
+	movf score_2, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x01		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x02		    	
+	call MOV_EEADR
+	movf score_1, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+goto Final
+    
+MOV_EEADR
+    movwf EEADR, A
+    return
+    
+MOV_EEDATA 
+    movwf EEDATA, A
+    return
+    
+WRITE_EEPROM
+    movlw b'00000100'	    ; Habilita el Write
+    movwf EECON1, A 
+    movlw 0x55		    ; Empieza protocolo de EECON2
+    movwf EECON2, A
+    movlw 0xAA
+    movwf EECON2, A	    ; Termina protocolo
+    bsf EECON1, WR, A	    ; Empieza a escribir
+    
+waitwrite
+    btfsc EECON1, WR, A
+	goto waitwrite
+	bcf EECON1, .2, A
+    clrf EEDATA, A	    ; Solo para verificar que se cargue el dato
+    
+    bsf EECON1, 0, A
+    movff EEDATA, 0x26
+    return
+        
+    
+Final 
+    end
