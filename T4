@@ -1,0 +1,67 @@
+#include <p18f45k50.inc>
+    org 0x00
+    #define RS	LATA, 1, A
+    #define E	LATA, 2, A
+    #define RW	LATA, 3, A
+    #define dataLCD LATD, A
+    movlw .222
+    movwf 0x22, A
+    goto start
+    
+    configura
+	bcf RS
+	bcf RW
+	bsf E
+	movwf dataLCD
+	nop
+	bcf E
+	call wait
+	return 
+		
+    wait
+	incf 0x22, F, A
+	btfss STATUS, 2, A
+	goto wait
+	return
+    
+    start
+	movlb .15
+	clrf ANSELA, BANKED
+	clrf ANSELD, BANKED
+	clrf TRISA, A
+	clrf TRISD, A
+	
+	movlw b'00111000'   ; FUNCTION SET (2 LINES)
+	call configura
+	movlw b'00000110'   ; ENTRY MODE SET
+	call configura
+	movlw b'00001111'   ; DISPLAY ON
+	call configura
+	movlw b'00000001'   ; CLEAR DISPLAY
+	call configura
+	
+    escribir
+	movlw b'11000101'   ; DDRAM ADDRESS 5
+	call configura
+	bsf RS
+	bcf RW
+	bsf E
+	movlw 'c'
+	movwf dataLCD
+	nop
+	bcf E
+	call wait
+	movlw b'11000110'   ; DDRAM ADDRESS 6
+	call configura	 
+	bsf RS
+	bcf RW
+	bsf E
+	movlw '4'
+	movwf dataLCD
+	nop
+	bcf E
+	call wait
+	
+end
+
+
