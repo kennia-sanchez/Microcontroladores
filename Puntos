@@ -1,0 +1,448 @@
+#include "p18f45k50.inc"
+org 0x00  
+    
+;------ REGRISTROS LCD ------------------------------------
+    #define RS LATA, 1, A
+    #define E LATA, 2, A
+    #define RW LATA, 3, A
+    #define dataLCD LATD, A
+    
+;------ REGRISTROS SCORE ------------------------------------
+    #define score   0x21, A
+    #define score_1 0x22, A
+    #define score_2 0x23, A
+    #define score_3 0x24, A
+    #define H_score 0x25, A
+    #define boolHS  0x26, A
+    
+;------ DIRECCION EEPROM ------------------------------------
+    ; EEPROM -> 0x00	-> High Score
+    ; EEPROM -> 0x01	-> score 1
+    ; EEPROM -> 0x02	-> score 2
+    ; EEPROM -> 0x03	-> score 3
+    ; Registro -> 0x26	-> Guardar los datos de la EEPROM
+    
+;------ REGISTRO PARA BANDERA DE PUNTOS ---------------------
+    #define d1 0x13, 0, A
+    #define d2 0x13, 1, A
+    #define d3 0x13, 2, A
+    #define d4 0x13, 3, A
+    #define d5 0x13, 4, A
+    #define d6 0x13, 5, A
+    #define d7 0x13, 6, A
+    #define d8 0x13, 7, A
+    #define d9 0x14, 0, A
+    #define d10 0x14, 1, A
+    
+goto start
+org 0x20
+    
+start
+    clrf TRISA, A
+    clrf TRISD, A
+
+ComandosLCD
+    movlw b'00111000' 
+    call Configuracion
+    movlw b'00001111' 
+    call Configuracion
+    movlw b'00000110' 
+    call Configuracion
+    movlw b'00000001' 
+    call Configuracion
+    
+    movlw .10
+    movwf score
+    
+    movlw .4
+    movwf score_1
+    
+    movlw .6
+    movwf score_2
+  
+    movlw .8
+    movwf score_3
+    
+    movlw .10
+    movwf H_score
+
+    movlw 0x01		    	
+    call MOV_EEADR
+    movf score_1, W
+    call MOV_EEDATA
+    call WRITE_EEPROM
+    
+    movlw 0x02		    	
+    call MOV_EEADR
+    movf score_2, W
+    call MOV_EEDATA
+    call WRITE_EEPROM
+    
+    movlw 0x03		    	
+    call MOV_EEADR
+    movf score_3, W
+    call MOV_EEDATA
+    call WRITE_EEPROM
+    
+    call SumarPuntos
+    call Puntaje
+    goto final
+    
+	
+;Cada que se gane una secuencia se debe poner en 1 su bandera d1=nivel 1 y asi
+    
+SumarPuntos 
+    ;clrf score
+    ;clrf WREG
+    ;btfsc d1
+    ;addlw 0x02 
+    ;btfsc d2
+    ;addlw 0x02 
+    ;btfsc d3
+    ;addlw 0x02 
+    ;btfsc d4
+    ;addlw 0x02 
+    ;btfsc d5
+    ;addlw 0x02 
+    ;btfsc d6
+    ;addlw 0x02
+    ;btfsc d7
+    ;addlw 0x02
+    ;btfsc d8
+    ;addlw 0x02 
+    ;btfsc d9
+    ;addlw 0x02
+    ;btfsc d10
+    ;addlw 0x02
+	
+    ;movwf score
+    
+	
+; Compara el High Score y los mueve de lugar si es high score
+   HIGH_SCORE
+	clrf W, A
+	movf score, W
+	subwf H_score, W
+	btfsc STATUS, N, A
+	    goto Escribe_HighScore
+	    goto Nuevo
+		
+    Escribe_HighScore
+	movlw 0x00		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+	call New_HighscoreLCD
+	
+	
+    Nuevo
+	movlw 0x03		    	
+	call MOV_EEADR
+	movf score_2, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x01		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x02		    	
+	call MOV_EEADR
+	movf score_1, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+	
+
+    
+Puntaje
+    puntos0
+	movlw .0
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos2  
+	    movlw '0'
+	    call Escribir
+	    return
+    
+    puntos2
+	movlw .2
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos4
+	    movlw '2'
+	    call Escribir
+	    return
+	    
+    puntos4
+	movlw .4
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos6
+	    movlw '4'
+	    call Escribir
+	    return
+	    
+    puntos6
+	movlw .6
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos8
+	    movlw '6'
+	    call Escribir
+	    return
+	    
+    puntos8
+	movlw .8
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos10
+	    movlw '8'
+	    call Escribir
+	    return
+	    
+    puntos10
+	movlw .10
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos12
+	    movlw '1'
+	    call Escribir
+	    movlw '0'
+	    call Escribir
+	    return
+	    
+    puntos12
+	movlw .12
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos14
+	    movlw '1'
+	    call Escribir
+	    movlw '2'
+	    call Escribir
+	    return
+	    
+    puntos14
+	movlw .14
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos16
+	    movlw '1'
+	    call Escribir
+	    movlw '4'
+	    call Escribir
+	    return
+	    
+    puntos16
+	movlw .16
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos18
+	    movlw '1'
+	    call Escribir
+	    movlw '6'
+	    call Escribir
+	    return
+	    
+    puntos18
+	movlw .18
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos20
+	    movlw '1'
+	    call Escribir
+	    movlw '8'
+	    call Escribir
+	    return
+	    
+    puntos20
+	movlw .20
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos0
+	    movlw '2'
+	    call Escribir
+	    movlw '0'
+	    call Escribir
+	    return
+	
+ 
+scoreLCD
+   ; movlw b'00000001' 
+   ; call Configuracion
+   ; movlw b'10000000' 
+   ; call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw ':'
+    call Escribir
+    movlw ' '
+    call Escribir
+    call Puntaje
+    return
+    
+HighscoreLCD
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    movlw ':'
+    call Escribir
+    movff H_score, score
+    call Puntaje
+    return
+    
+New_HighscoreLCD
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'N'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'W'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    movlw ':'
+    call Escribir
+    movff H_score, score
+    call Puntaje
+    return
+   
+    ;;;;;kathia hehe
+Menu_Highscore
+    call HighscoreLCD
+    movlw b'11000000' 
+    call Configuracion
+    movff score1, score
+    call scoreLCD
+    call delay_1s ;?
+    movff score2, score
+    call scoreLCD
+    call delay_1s ;?
+    movff score3, score
+    call scoreLCD
+    call delay_1s ;?
+    return
+    ;;;;;;
+    
+loop goto loop
+
+Configuracion
+    bcf RS 
+    bcf RW 
+    goto Enable
+    
+Escribir  
+    bsf RS 
+    bcf RW 
+    
+Enable
+    bsf E 
+    movwf dataLCD 
+    nop
+    bcf E 
+    call esperaLCD 
+    return
+     
+esperaLCD
+    nop
+    return
+    
+;EEPROM -----------------------------
+
+MOV_EEADR
+    movwf EEADR, A
+    return
+    
+MOV_EEDATA 
+    movwf EEDATA, A
+    return
+    
+WRITE_EEPROM
+    movlw b'00000100'	    ; Habilita el Write
+    movwf EECON1, A 
+    movlw 0x55		    ; Empieza protocolo de EECON2
+    movwf EECON2, A
+    movlw 0xAA
+    movwf EECON2, A	    ; Termina protocolo
+    bsf EECON1, WR, A	    ; Empieza a escribir
+waitwrite
+    btfsc EECON1, WR, A
+	goto waitwrite
+	bcf EECON1, .2, A
+    clrf EEDATA, A	    ; Solo para verificar que se cargue el dato
+    
+    bsf EECON1, 0, A
+    movff EEDATA, 0x26
+    return     
+
+	
+	
+final
+    end
+
+
