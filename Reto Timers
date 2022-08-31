@@ -1,0 +1,44 @@
+#include "p18f45k50.inc"
+org 0x00
+goto start
+Delay EQU 0X40
+
+start
+	clrf TMR3L,A 
+	clrf TMR3H, A 
+	movlw .2
+	movwf Delay, A
+	
+Num	call delay1
+	dcfsnz Delay, F, A
+	return
+	goto Num
+	
+loop1 goto loop1
+
+delay1
+	movlw b'00110110'
+	movwf T3CON,A
+	call onesec
+	bcf PIR2, 1, A 
+	bcf T3CON, 7, A 
+	call flag
+	return
+
+onesec
+	movlw b'00001011'
+	movwf TMR3H, A
+	movlw b'11011100' 
+	movwf TMR3L, A
+	return
+
+flag
+	btfss PIR2, 1, A 
+	goto flag
+	bcf PIR2, 1, A 
+	return
+	
+	
+end
+
+
