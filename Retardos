@@ -1,0 +1,38 @@
+#include "p18f45k50.inc"
+org 0x00
+goto start
+org 0x40
+
+    
+start 
+    movlw .252
+    movwf 0x34,A
+    call retardo3
+    goto start
+
+
+retardo1	
+    incf 0x32, F, A
+    btfss STATUS, 2, A
+    goto retardo1
+    return
+	
+retardo2   
+	call retardo1
+	incf 0x33, F, A
+	btfss STATUS, 2, A
+	goto retardo2
+	return
+	
+retardo3
+	call retardo2
+	incf 0x34, F, A
+	btfss STATUS, 2
+	goto retardo3
+	return
+	
+
+	
+end
+
+
