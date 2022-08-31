@@ -1,0 +1,23 @@
+#include "p18f45k50.inc"
+org 0x00
+
+
+start
+    movlb .15			    ; BSR = 15
+    clrf ANSELB, BANKED		    ; Puerto B Digital
+    clrf TRISB, A		    ; Activa como salida el puerto B
+    bcf INTCON2, .7, A		    ; Pone en 0 el bit 7 para habilitar el INTCON2 para las pullup
+    setf WPUB, A		    ; Activa el bit del registro WPUB
+    
+    clrf WREG, A		    ; Inicia en 0
+    movwf LATB, A		    ; Envia la señal
+
+suma
+    addlw .1			    ; Va aumentando 1
+    movwf LATB, A		    ; Lo envia a PORTB
+    btfss STATUS, C, A		    ; Checa si el carry esta en 1
+    goto suma
+    goto start
+	
+    
+    end
