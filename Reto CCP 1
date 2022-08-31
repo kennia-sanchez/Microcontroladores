@@ -1,0 +1,57 @@
+; Utilice CCP1 para determinar si un usuario se tarda demasiado en presionar un botón. 
+; Para ello, asuma que el tiempo máximo para presionar el botón es del tiempo máximo ofrecido por el módulo de temporización. 
+; Encienda un LED verde si el botón se presiona a tiempo y uno rojo si no lo hace.
+    
+#include <p18f45k50.inc>
+org 0x00
+goto Configurar
+    
+org 0x08
+retfie
+ 
+Configurar
+    movlb .15
+    clrf ANSELC, BANKED		
+    clrf ANSELB, BANKED		
+    clrf TRISB, A
+    setf TRISC, A
+    clrf LATC, A
+    movlw b'00110010' ; TIMER1 preescalador 1:8 y 16 bit
+    movwf T1CON, A
+    clrf T1CON, A
+    movlw b'00000101'
+    movwf CCP1CON, A
+    movlw .0
+    movwf CCPTMRS, BANKED
+     
+start
+    clrf LATB, A
+    clrf TMR1L ;limpiar valores de conteo
+    clrf TMR1H ;limpiar valores de conteo
+    bcf PIR1, 2, A ;limpia la bandera del CCP1
+    bcf PIR1, 0, A ;limpia la bandera del TIMER1
+    bsf T1CON, 0, A ;empieza el timer
+ 
+RevisarTMR
+    btfss PIR1, TMR1IF ,A ;revisa bandera del TIMER1
+	goto RevisarCCP
+	goto LEDrojo
+ 
+RevisarCCP
+    btfss PIR1, 2, A ;salta una línea si el bit 2 está activo; revisa la bandera del CCP1
+	goto RevisarTMR ;Revisa la bandera del timer
+	goto LEDverde ;Prende led verde si el bit 2 está activo
+ 
+LEDverde
+    bsf LATB, 0, A ;activa el bit 0 del la salida del puerto B
+    bcf T1CON, 0, A ;limpia el bit 0 del T1CON
+	goto start
+ 
+LEDrojo
+    bsf LATB, 1, A ;activa el bit 1 del la salida del puerto B
+    bcf T1CON, 0, A ;limpia el bit 0 del T1CON
+	goto start
+    
+end
+
+
