@@ -1,0 +1,160 @@
+#include "p18f45k50.inc"
+    
+org 0x00
+
+
+;reg1 equ 0x20
+;reg2 equ 0x21
+;reg3 equ 0x22
+;reg4 equ 0x23
+;reg5 equ 0x24
+;reg6 equ 0x25
+;reg7 equ 0x26
+;reg8 equ 0x27
+;reg9 equ 0x28
+;reg10 equ 0x29
+;pos equ 0x30
+;neg equ 0x31
+    
+start
+;1.2	clrf pos, A
+	;clrf neg, A
+	
+	;btfss reg1, .7, A
+	;goto maspos1
+	;incf neg, F, A
+	;goto rev_reg_2
+	
+;maspos1
+;	incf pos, F, A
+;	goto rev_reg_2
+	
+;rev_reg_2
+;	btfss reg2, .7, A
+;	goto maspos2
+;	incf neg, F, A
+;	goto rev_reg_3
+	
+;maspos2
+;	incf pos, F, A
+;	goto rev_reg_3
+	
+;rev_reg_3
+;	btfss reg3, .7, A
+;	goto maspos3
+;	incf neg, F, A
+;	goto rev_reg_4
+	
+;maspos3
+;	incf pos, F, A
+;	goto rev_reg_4
+	
+;rev_reg_4
+;	btfss reg4, .7, A
+;	goto maspos4
+;	incf neg, F, A
+;	goto rev_reg_5
+	
+;maspos4
+;	incf pos, F, A
+;	goto rev_reg_5
+	
+;rev_reg_5
+;	btfss reg5, .7, A
+;	goto maspos5
+;	incf neg, F, A
+;	goto rev_reg_6
+	
+;maspos5
+;	incf pos, F, A
+;	goto rev_reg_6
+	
+;rev_reg_6
+;	btfss reg6, .7, A
+;	goto maspos6
+;	incf neg, F, A
+;	goto rev_reg_7
+	
+;maspos6
+;	incf pos, F, A
+;	goto rev_reg_7
+	
+;rev_reg_7
+;	btfss reg7, .7, A
+;	goto maspos7
+;	incf neg, F, A
+;	goto rev_reg_8
+	
+;maspos7
+;	incf pos, F, A
+;	goto rev_reg_8
+	
+;rev_reg_8
+;	btfss reg8, .7, A
+;	goto maspos8
+;	incf neg, F, A
+;	goto rev_reg_9
+	
+;maspos8
+;	incf pos, F, A
+;	goto rev_reg_9
+	
+;rev_reg_9
+;	btfss reg9, .7, A
+;	goto maspos9
+;	incf neg, F, A
+;	goto rev_reg_10
+	
+;maspos9
+;	incf pos, F, A
+;	goto rev_reg_10
+	
+;rev_reg_10
+;	btfss reg10, .7, A
+;	goto maspos10
+;	incf neg, F, A
+;	goto start
+	
+;maspos10
+;	incf pos, F, A
+;	goto start
+	
+;1.4	movwf reg1, A
+;	rrncf reg1, F, A
+;	rrncf reg1, F, A
+	
+;	bcf reg1, .5, A
+;	bcf reg1, .6, A
+;	bcf reg1, .7, A
+
+
+;	movff reg1, 0x10
+;	clrf WREG, A
+	
+;	movlw 0x15
+;	movwf 0x07
+;	clrf WREG, A
+	
+;	addwf 0x07, W, A
+;	addwf 0x07, W, A
+;	addwf 0x07, W, A
+;	addwf 0x07, W, A
+;	addwf 0x07, W, A
+	
+;	movlw 0x79
+;	sublw 0x40
+	
+	
+
+  
+     movf 0x30, W, A
+     addlw d'29'
+     movwf .69, A
+
+	
+	goto start
+     
+	nop  
+	end
+
+
