@@ -1,0 +1,139 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+goto configurar
+org 0x20
+    
+configurar
+    movlb .15
+    clrf ANSELA, BANKED
+    clrf ANSELB, BANKED
+    bcf INTCON2, .7, A		; pullups globales
+    movlw b'00000011'
+    movwf TRISB, A		; teclas
+    movwf WPUB, A
+    clrf TRISA, A
+  
+start
+    setf LATB, A
+    clrf TRISA, A 
+   
+checar1
+    movlw b'11111011'
+    movwf LATB, A
+    btfss PORTB, .0, A
+	goto Prender1
+	btfss PORTB, .1, A
+	    goto Prender6
+	    goto checar2
+	    
+checar2
+    movlw b'11110111'
+    movwf LATB, A
+    btfss PORTB, .0, A
+	goto Prender2
+	btfss PORTB, .1, A
+	    goto Prender7
+	    goto checar3
+	    
+checar3
+    movlw b'11101111'
+    movwf LATB, A
+    btfss PORTB, .0, A
+	goto Prender3
+	btfss PORTB, .1, A
+	    goto Prender8
+	    goto checar4
+	    
+checar4
+    movlw b'11011111'
+    movwf LATB, A
+    btfss PORTB, .0, A
+	goto Prender4
+	btfss PORTB, .1, A
+	    goto Prender9
+	    goto checar5
+
+checar5
+    movlw b'10111111'
+    movwf LATB, A
+    btfss PORTB, .0, A
+	goto Prender5
+	btfss PORTB, .1, A
+	    goto Prender0
+	    goto checar1
+
+Prender1
+    call delay
+    movlw .1
+    movwf LATA,A
+    goto start
+   
+Prender2
+    call delay
+    movlw .2
+    movwf LATA,A
+    goto start
+    
+Prender3
+    call delay
+    movlw .3
+    movwf LATA,A
+    goto start
+    
+Prender4
+    call delay
+    movlw .4
+    movwf LATA,A
+    goto start
+    
+Prender5
+    call delay
+    movlw .5
+    movwf LATA,A
+    goto start
+    
+Prender6
+    call delay
+    movlw .6
+    movwf LATA,A
+    goto start
+    
+Prender7
+    call delay
+    movlw .7
+    movwf LATA,A
+    goto start
+    
+Prender8
+    call delay
+    movlw .8
+    movwf LATA,A
+    goto start
+    
+Prender9
+    call delay
+    movlw .9
+    movwf LATA,A
+    goto start
+    
+Prender0
+    call delay
+    movlw .0
+    movwf LATA,A
+    goto start
+    
+    
+delay
+    return
+    
+end
+
+    
+
+    
+   
+    
+    
+
+
