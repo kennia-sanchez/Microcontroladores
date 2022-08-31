@@ -1,0 +1,180 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+Cero	EQU	b'00111111'
+Uno	EQU	b'00000110'
+Dos	EQU	b'01011011'
+Tres	EQU	b'01001111'
+Cuatro	EQU	b'01100110'
+Cinco	EQU	b'01101101'
+Seis	EQU	b'01111101'
+Siete	EQU	b'00000111'
+Ocho	EQU	b'01111111'
+Nueve	EQU	b'01101111'
+ 
+goto start
+org 0x40
+	
+start
+    movlb .15
+    clrf ANSELB, BANKED
+    movlw b'10000000'
+    movwf TRISB, A
+    bcf INTCON2, .7, A
+    setf WPUB, A
+    clrf WREG, A 
+    
+Pulso1
+    btfss PORTB, .7, A 
+    goto Pulso1
+    goto Digito0
+    
+Digito0	
+    movlw Cero
+    movwf LATB, A
+    goto Pushbutton1
+    
+Pushbutton1
+    btfss PORTB, .7, A
+    goto Pulso2
+    goto Pushbutton1
+    
+Pulso2
+    btfss PORTB, .7, A
+    goto Pulso2
+    goto Digito1
+    
+Digito1
+    movlw Uno
+    movwf LATB, A
+    goto Pushbutton2
+    
+Pushbutton2
+    btfss PORTB, .7, A
+    goto Pulso3
+    goto Pushbutton2
+    
+Pulso3
+    btfss PORTB, .7, A
+    goto Pulso3
+    goto Digito2
+    
+Digito2
+    movlw Dos
+    movwf LATB, A
+    goto Pushbutton3
+    
+Pushbutton3
+    btfss PORTB, .7, A
+    goto Pulso4
+    goto Pushbutton3
+    
+Pulso4
+    btfss PORTB, .7, A
+    goto Pulso4
+    goto Digito3
+    
+Digito3
+    movlw Tres
+    movwf LATB, A
+    goto Pushbutton4
+    
+Pushbutton4
+    btfss PORTB, .7, A
+    goto Pulso5
+    goto Pushbutton4
+    
+Pulso5
+    btfss PORTB, .7, A
+    goto Pulso5
+    goto Digito4
+    
+Digito4
+    movlw Cuatro
+    movwf LATB, A
+    goto Pushbutton5
+    
+Pushbutton5
+    btfss PORTB, .7, A
+    goto Pulso6
+    goto Pushbutton5 
+    
+Pulso6
+    btfss PORTB, .7, A
+    goto Pulso6
+    goto Digito5
+    
+Digito5
+    movlw Cinco
+    movwf LATB, A
+    goto Pushbutton6
+    
+Pushbutton6
+    btfss PORTB, .7, A
+    goto Pulso7
+    goto Pushbutton6 
+    
+Pulso7
+    btfss PORTB, .7, A
+    goto Pulso7
+    goto Digito6
+    
+Digito6
+    movlw Seis
+    movwf LATB, A
+    goto Pushbutton7
+    
+Pushbutton7
+    btfss PORTB, .7, A
+    goto Pulso8
+    goto Pushbutton7
+    
+Pulso8
+    btfss PORTB, .7, A
+    goto Pulso8
+    goto Digito7
+    
+Digito7
+    movlw Siete
+    movwf LATB, A
+    goto Pushbutton8
+    
+Pushbutton8
+    btfss PORTB, .7, A
+    goto Pulso9
+    goto Pushbutton8
+    
+Pulso9
+    btfss PORTB, .7, A
+    goto Pulso9
+    goto Digito8
+    
+Digito8
+    movlw Ocho
+    movwf LATB, A
+    goto Pushbutton9
+    
+Pushbutton9
+    btfss PORTB, .7, A
+    goto Pulso10
+    goto Pushbutton9
+    
+Pulso10
+    btfss PORTB, .7, A
+    goto Pulso10
+    goto Digito9
+    
+Digito9
+    movlw Nueve
+    movwf LATB, A
+    goto Pushbutton10
+    
+Pushbutton10
+    btfss PORTB, .7, A
+    goto Pulso1
+    goto Pushbutton10
+    
+    
+    end
+
+
