@@ -1,0 +1,78 @@
+; Adapte el código del ejemplo para que el módulo CCP genere la señal de arranque para una carga de alta potencia. 
+; Debido a las restricciones eléctricas, la carga debe ser alimentada ?poco a poco? hasta llegar a la tensión final. 
+; Por tanto, su código debe usar el modo de comparación para generar una señal de 16 bits (preescalador unitario). 
+; Esa señal iniciará en cero, y con cada periodo la parte ?alta? durará un ciclo más, hasta llegar al valor máximo.
+
+#include <p18f45k50.inc>
+    lim2l EQU 0x01
+    lim2h EQU 0x00
+    reg1l EQU 0x30
+    reg1h EQU 0x32
+org 0x00
+goto Configura
+ 
+org 0x08
+retfie
+ 
+Configura
+    movlb d'15'
+    clrf ANSELC, BANKED
+    clrf TRISC, A
+    clrf LATC, A
+
+    movlw b'00000000' ;timer1
+    movwf T1CON, A
+    clrf T1GCON, A
+
+    movlw b'00000010' ;ccp2
+    movwf CCP2CON, A
+    movlw b'00000000'
+    movwf CCPTMRS, BANKED
+    movlw 0xF5
+    movwf reg1l, A
+    movlw 0xFF
+    movwf reg1h, A
+    movlw 0x00
+    movwf TMR1H, A
+    movwf TMR1L, A
+    bsf T1CON, 0, A ; Starts timer
+    
+start
+    call mueve1 ; Define first limit
+    bcf PIR2, 0, A ; Clears CCP2 flag
+    
+esp1 ; Wait for first trigger
+    btfss PIR2, 0, A
+	goto esp1
+	call mueve2 ; Second limit
+	bcf PIR2, 0, A ; Clears CCP2 flag
+    
+esp2 ; Wait for second trigger
+    btfss PIR2, 0, A
+	goto esp2
+	goto start
+ 
+mueve2
+    movlw lim2l
+    movwf CCPR2L, A
+    movlw lim2h
+    movwf CCPR2H, A
+    return
+
+mueve1
+    decf reg1l, 1, 0
+    btfss STATUS, N, A
+	decf reg1h, 1, 0
+	goto move
+	btfss STATUS, N, A
+	    return
+    
+goto move
+ 
+move
+    movff reg1l, CCPR2L
+    movff reg1h, CCPR2H
+    return
+    
+end
+
