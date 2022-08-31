@@ -1,0 +1,2050 @@
+#include "p18f45k50.inc"   
+org 0x00   
+    #define RS LATA, 0, A
+    #define RW LATA, 1, A
+    #define E LATA, 2, A
+    #define dataLCD LATB, A
+    ;Registros a utilizar-------------------------------------------------------
+    Cont1 EQU 0x30
+    Cont2 EQU 0x31
+    Cont3 EQU 0x32
+    Botones EQU 0x33
+    SEQ EQU 0x34
+    rand EQU 0x35
+    t_rand EQU 0x36
+    cont_seq EQU 0x37
+    rand2 EQU 0x38
+    conttimeout EQU 0x39
+    seq1 EQU 0x40
+    seq2 EQU 0x41
+    seq3 EQU 0x42
+    seq4 EQU 0x43
+    seq5 EQU 0x44
+    seq6 EQU 0x45
+    seq7 EQU 0x46
+    seq8 EQU 0x47
+    seq9 EQU 0x48
+    seq10 EQU 0x49
+    aux EQU 0x15
+
+ 
+;Registros asociados al nivel en el que va el jugador---------------------------
+	#define d1 0x13, 0, A
+	#define d2 0x13, 1, A
+	#define d3 0x13, 2, A
+	#define d4 0x13, 3, A
+	#define d5 0x13, 4, A
+	#define d6 0x13, 5, A
+	#define d7 0x13, 6, A
+	#define d8 0x13, 7, A
+	#define d9 0x14, 0, A
+	#define d10 0x14, 1, A
+	
+;------ REGRISTROS SCORE ------------------------------------
+   score   EQU 0x21
+   score_1 EQU 0x22
+   score_2 EQU 0x23
+   score_3 EQU 0x24
+   H_score EQU 0x25
+    
+;------ DIRECCION EEPROM ------------------------------------
+    ; EEPROM -> 0x00	-> High Score
+    ; EEPROM -> 0x01	-> score 1
+    ; EEPROM -> 0x02	-> score 2
+    ; EEPROM -> 0x03	-> score 3
+    ; Registro -> 0x26	-> Guardar los datos de la EEPROM
+ 
+goto start
+     
+org 0x08   ;Interrupciones de alta prioridad-------------------------------------
+goto abort
+org 0x18   ;Interrupciones de baja prioridad------------------------------------
+goto contadortimeout
+    
+org 0x20
+start
+    movlb .15
+    ;Configuración de I/O del microcontrolador----------------------------------
+    clrf ANSELA,BANKED
+    clrf ANSELB,BANKED
+    clrf ANSELC,BANKED
+    clrf TRISA, A
+    clrf TRISB, A
+   ;Contadores para secuencias------------------------------------------------
+    clrf  aux, A
+ComandosLCD
+    call Retardo
+    movlw b'00111000' ;function set 8 bits, 2 líneas, 5x8 puntos
+    call Configuracion
+    movlw b'00001100' ;on/off control cursor y blinker apagado
+    call Configuracion
+    movlw b'00000110' ;entry mode incremento de cursor 
+    call Configuracion
+    call winloose
+Main
+    call Menu
+    goto Revisar
+    loop goto loop
+    
+winloose
+    movlw b'01000000';apunta a a la posición 0 de la CGRAM
+    call Configuracion
+Circulo1
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000011'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    
+Circulo2
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00011000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+  
+Circulo3
+    movlw b'00001000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000011'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    
+Circulo4
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00011000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    
+Tacha1
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    
+Tacha2
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    
+Tacha3
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00010000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    
+Tacha4
+    movlw b'00010000'
+    call Escribir
+    movlw b'00001000'
+    call Escribir
+    movlw b'00000100'
+    call Escribir
+    movlw b'00000010'
+    call Escribir
+    movlw b'00000001'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    movlw b'00000000'
+    call Escribir
+    return
+
+
+Menu
+    call Retardo
+    movlw b'00000001'; clear LCD
+    call Configuracion
+    movlw b'10000000' ;posición 0 línea 1 LCD
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    ;---------------------
+    movlw b'11000000'; posición 0 línea 2 LCD
+    call Configuracion
+    movlw '>'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    goto Revisar
+    return
+
+
+;REVISION TECLADO--------------------------------------------------------------
+Revisar
+    clrf ANSELD, BANKED ;digitales puerto D
+    clrf TRISD, A ;salidas puerto D
+    ;activamos todas la interrupciones alta y baja prioridad---------------
+    bsf RCON, 7, A	    ; IPEN = 1
+    bsf INTCON2, 0, A	    ; IOCIP = 1	ALTA PRIORIDAD
+    movlw b'11001000' ;bits 7 y 6 alta y baja prioridad. bit 3 enable para interrupciones en IOC
+    movwf INTCON, A
+    bsf IOCC, 4, A	    ; IOCC4 = 1	HABILITA RC CON IOC
+;----------------conf interrupt timer1 timeout
+bsf PIE1, 0, A		;TMR1IE = 1 activa/ habilita interruoción 
+bcf IPR1, 0, A		;TMR1IP = 0 prioridad baja 
+bcf PIR1, 0, A		;TMR1IF = 0 limpia bandera de interrupciones
+;conf timer2-----------------
+   clrf TMR2, A
+   movlw b'00000100' ;enciende timer 2 inicia en 0
+   movwf T2CON, A
+;conf timer1----------------------
+movlw b'00001011' ;parte más significativa de 3036
+movwf TMR1H, A
+movlw b'11011100' ;parte meNos significativa de 3036
+movwf TMR1L, A
+movlw b'00110010' ;preescalador de 1:8, 16 bits
+movwf T1CON, A
+    
+checarStart
+    btfss PORTC, .0, A
+	goto checarScores
+	goto Jugando
+checarScores
+    btfss PORTC, .1, A
+        goto checarStart
+	goto Scores
+	    
+;Llama a los puntajes guardados-------------------------------------------------
+Scores
+    call LeerEEPROM
+    call Menu_Highscore
+    call Main
+    return
+;Inicia el juego----------------------------------------------------------------
+Jugando
+    movff TMR2, rand
+    call genPRN;se genera un número aleatoria a partir de valor semilla sacado de timer 2
+    call ledbien ;led verde
+    goto LVL1
+;NIVELES------------------------------------------------------------------------
+
+;NIVEL 1------------------------------------------------------------------------
+
+LVL1
+    call Retardo
+    movlw b'00000001';clear LCD
+    call Configuracion
+    movlw b'10000000' ;posición 0 línea 1
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '1'
+    call Escribir
+    ;secuencia----------------------
+    call Retardo2
+    incf aux,F, A ;se suma uno al registro contador aux
+    call disp_seq01
+    goto test1
+    
+test1
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    goto win1
+	
+win1
+    bsf d1 ;+2 puntos en SumarPuntos
+    call DispCirculo
+    call Retardo2
+    goto LVL2
+;NIVEL 2-----------------------------------------------------
+LVL2
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '2'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq02
+    goto test2
+
+test2
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    goto win2
+	
+win2
+    bsf d2
+    call DispCirculo
+    call Retardo2
+    goto LVL3
+;NIVEL 3-----------------------------------------------------
+LVL3
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '3'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq03
+    goto test3
+
+test3
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    goto win3	
+win3
+    bsf d3
+    call DispCirculo
+    call Retardo2
+    goto LVL4
+;NIVEL 4----------------------------------------------   
+LVL4
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '4'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq04
+    goto test4
+
+test4
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    goto win4
+	
+win4
+    bsf d4
+    call DispCirculo
+    call Retardo2
+    goto LVL5
+;NIVEL 5----------------------------------------------       
+    LVL5
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '5'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq05
+    goto test5
+
+test5
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    goto win5
+	
+win5
+    bsf d5
+    call DispCirculo
+    call Retardo2
+    goto LVL6
+    
+;NIVEL 6----------------------------------------------  
+   LVL6
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '6'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq06
+    goto test6
+
+test6
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones6
+    call reiniciatimeout
+    goto win6
+	
+win6
+    bsf d6
+    call DispCirculo
+    call Retardo2
+    goto LVL7 
+    
+;NIVEL 7----------------------------------------------   
+    LVL7
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '7'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq07
+    goto test7
+
+test7
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones6
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones7
+    call reiniciatimeout
+    goto win7
+	
+win7
+    bsf d1
+    call DispCirculo
+    call Retardo2
+    goto LVL8
+;NIVEL 8----------------------------------------------   
+    LVL8
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '8'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq08
+    goto test8
+
+test8
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones6
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones7
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones8
+    call reiniciatimeout
+    goto win8
+	
+win8
+    bsf d1
+    call DispCirculo
+    call Retardo2
+    goto LVL9
+;NIVEL 9----------------------------------------------   
+    LVL9
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '9'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq09
+    goto test9
+
+test9
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones6
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones7
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones8
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones9
+    call reiniciatimeout
+    goto win9
+	
+win9
+    bsf d9
+    call DispCirculo
+    call Retardo2
+    goto LVL10
+;NIVEL 10----------------------------------------------   
+    LVL10
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'L'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw '1'
+    call Escribir
+    movlw '0'
+    call Escribir
+    ;secuencia------------------
+    call Retardo2
+    incf aux,F, A
+    call disp_seq10
+    goto test10
+
+test10
+    call iniciatimeout
+    call guardabotones1
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones2
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones3
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones4
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones5
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones6
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones7
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones8
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones9
+    call reiniciatimeout
+    call iniciatimeout
+    call guardabotones10
+    call reiniciatimeout
+    goto win10
+	
+win10
+    bsf d10
+    call campeon ;escribe en el LCD CAMPEON
+    call DispCirculo
+    call SumarPuntos ;Suma los puntos de toda la partida
+    movlw b'00000001' ;clear LCD
+    call Configuracion
+    movlw b'10000000' ;posición 0 línea 1 LCD
+    call Configuracion
+    call scoreLCD2 ;mostrar el puntaje obtenido
+    call Reinicio ;limpia todos los registros 
+    call Menu
+    
+;Acciones para el LCD-------------------------------------------------------------
+Configuracion
+    bcf RS 
+    bcf RW 
+    goto Enable
+    
+Escribir 
+    bsf RS 
+    bcf RW                                      
+    
+Enable
+    bsf E 
+    movwf dataLCD  
+    call Retardo
+    bcf E 
+    return
+      
+;Retardos---------------------------------------------------------------------  
+;Retardo 50 milisegundos --------------------
+Retardo
+delay_50ms
+    movlw b'00000010'
+    movwf T0CON, A
+    movlw b'11100111'
+    movwf TMR0H, A
+    movlw b'10010110'
+    movwf TMR0L, A
+    bsf T0CON, 7, A
+    btg LATD, 7, A
+    check50ms
+    btfss INTCON, 2, A
+	goto check50ms
+	bcf INTCON, 2, A
+    return
+    
+;Retardo un segundo--------------------
+Retardo2
+    clrf Cont2,A
+    clrf Cont3,A
+    goto limpiar
+limpiar
+    clrf WREG,A
+    clrf Cont1,A
+Ciclo 
+    goto salto
+salto
+    goto new
+new
+    incf Cont1,F,A
+    movf Cont1,W,A
+    btfss STATUS,C,A
+    goto Ciclo
+    goto siguiente
+siguiente
+    incf Cont2,F,A
+    movf Cont2,W,A
+    btfss STATUS,C,A
+    goto limpiar
+    goto limpiar2
+limpiar2
+    clrf WREG,A
+    clrf Cont1,A
+Ciclo2 
+    goto salto2
+salto2
+    incf Cont1,F,A
+    movf Cont1,W,A
+    btfss STATUS,C,A
+    goto Ciclo2
+    goto siguiente2
+siguiente2
+    incf Cont3,F,A
+    movf Cont3,W,A
+    btfss STATUS,C,A
+    goto limpiar2
+    return
+    
+;Retardo 500ms
+Retardo3
+    movlw b'00000010'
+    movwf T0CON, A
+    movlw b'00001011'
+    movwf TMR0H, A
+    movlw b'11011100'
+    movwf TMR0L, A
+    bsf T0CON, 7, A
+    check500ms
+    btfss INTCON, 2, A	    ;CHECAR TMR0IF
+	goto check500ms
+	bcf INTCON, 2, A
+    return
+;Secuencia a seguir cuando se gana-------------------------------------------
+DispCirculo
+    call ledbien
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'N' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '!'
+    call Escribir
+    movlw '!'
+    call Escribir
+    movlw '!'
+    call Escribir
+    call Retardo2
+        movlw b'00000001'  ;CLEAR
+        call Configuracion
+	movlw b'10000111'   ; SET CURSOR
+	call Configuracion
+	MOVLW 0 
+	call Escribir
+	MOVLW 1 
+	call Escribir
+        movlw b'11000111'   ; SET CURSOR
+	call Configuracion
+	MOVLW 2 
+	call Escribir
+	MOVLW 3 
+	call Escribir
+	return
+;Secuencia a seguir cuando se pierde--------------------------------------------
+  DispTacha
+    call SumarPuntos
+    call ledmal ;led rojo
+    call Retardo
+    movlw b'00000001'
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'G' 
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'M'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'V'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    call Retardo2
+        movlw b'00000001'  ;CLEAR
+        call Configuracion
+	movlw b'10000111'   ; SET CURSOR
+	call Configuracion
+	movlw 4 ;carácter guardado en 4 espacio de la CGRAM
+	call Escribir
+	movlw 5 
+	call Escribir
+        movlw b'11000111'    ; SET CURSOR
+	call Configuracion
+	movlw 6
+	call Escribir
+	movlw 7 
+	call Escribir
+	call Retardo2
+	movlw b'00000001'
+        call Configuracion
+        movlw b'10000000' 
+        call Configuracion
+        call scoreLCD2
+	call Reinicio
+	call Menu
+	return
+;Revisión de botones durante el juego-----------------------------------------
+checkboton1
+    clrf Botones, A
+    btfss PORTC, .0, A
+    goto checkboton2
+    call botonstart
+    return
+    
+checkboton2
+    btfss PORTC, .1, A
+    goto checkboton3
+    call botonscore
+    return
+    
+checkboton3
+    btfss PORTC, .2, A
+    goto checkboton4
+    call botonizquierda
+    return
+    
+checkboton4
+    btfss PORTC, .6, A
+    goto checkboton1
+    call botonderecha
+    return
+;Valor a registro según el botón presionado-----------------------------------    
+botonstart
+    movlw b'00000001'
+    movwf Botones, A
+    return
+    
+botonscore
+    movlw b'00000010'
+    movwf Botones, A
+    return
+    
+botonizquierda
+    movlw b'00000100'
+    movwf Botones, A
+    return
+    
+botonderecha
+    movlw b'00001000'
+    movwf Botones, A
+    return
+    
+;Limpia registro de botones-----------------------------------------------------   
+limpiabotones
+    clrf Botones, A
+    return
+;Encendido de led verde-----------------------------------------------------
+ledbien
+    bsf LATD, .1, A
+    call Retardo3
+    call Retardo3
+    bcf LATD, .1, A
+    return
+;Encendido de led rojo---------------------------------------------------------    
+ledmal
+    bsf LATD, .0, A
+    call Retardo3
+    call Retardo3
+    bcf LATD, .0, A
+    return
+ ;Generacion de secuencia aleatoria-----------------------------------------------   
+generasecuencia
+    ; ####### DISPLAY SECUENCIAS  ######
+
+disp_seq01
+	movlw .1
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand ;se pasa a rand el número aleatorio generado anteriormente
+	call LED_ON
+return
+
+disp_seq02
+	movlw .2
+	movwf cont_seq 
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq03
+	movlw .3
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq04
+	movlw .4
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq05
+	movlw .5
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq06
+	movlw .6
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq07
+	movlw .7
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq08
+	movlw .8
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq09
+	movlw .9
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+disp_seq10
+	movlw .10
+	movwf cont_seq
+	clrf SEQ, A
+	movff rand2, rand
+	call LED_ON
+return
+
+;####################	PRENDER LEDS SECUENCIA ####
+
+
+LED_ON
+	btfsc rand, 0, A
+	call ON_b1
+	btfsc rand, 1, A
+	call ON_y1
+	btfsc rand, 2, A
+	call ON_g1
+	btfsc rand, 3, A
+	call ON_r1
+	btfsc rand, 4, A
+	call ON_b2
+	btfsc rand, 5, A
+	call ON_y2
+	btfsc rand, 6, A
+	call ON_g2
+	btfsc rand, 7, A
+	call ON_r2
+	
+	movlw 1
+	subwf cont_seq, W
+	btfss STATUS, N, A
+	goto LED_ON
+        return
+	
+	
+	ON_b1
+	bsf SEQ, .0, A ;en secuencia pone un 1 en bit 0
+	bsf LATD, .2, A ;enciende el led azul
+	call Retardo3 
+	call Retardo3
+	bcf LATD, .2, A ;apaga el led azul
+	call Retardo3
+	dcfsnz cont_seq ; si es igual a 0 no salta y limpia rand, si es diferente de 0 salta y va a guaradr secuencia
+	clrf rand, A	; limpia rand para que no se encienda ningun otro led si la secuencia asi lo indica 
+	call guardasecuencia ;guarda el led encendido en otro registro 
+	clrf SEQ, A
+	return
+
+	ON_y1
+	bsf SEQ, .1, A
+	bsf LATD, .3, A
+	call Retardo3   
+	call Retardo3 
+	bcf LATD, .3, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_g1
+	bsf SEQ, .2, A
+	bsf LATD, .4, A
+	call Retardo3 
+	call Retardo3 
+	bcf LATD, .4, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_r1
+	bsf SEQ, .3, A
+	bsf LATD, .5, A
+	call Retardo3  
+	call Retardo3 
+	bcf LATD,.5, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_b2
+	bsf SEQ, .0, A
+	bsf LATD, .2, A
+	call Retardo3 
+	call Retardo3 
+	bcf LATD, .2, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_y2
+	bsf SEQ, .1, A
+	bsf LATD, .3, A
+	call Retardo3 
+	call Retardo3 
+	bcf LATD, .3, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_g2
+	bsf SEQ, .2, A
+	bsf LATD, .4, A
+	call Retardo3 
+	call Retardo3 
+	bcf LATD, .4, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+
+	ON_r2
+	bsf SEQ, .3, A
+	bsf LATD, .5, A
+	call Retardo3  
+	call Retardo3 
+	bcf LATD, .5, A
+	call Retardo3
+	dcfsnz cont_seq 
+	clrf rand, A	
+	call guardasecuencia
+	clrf SEQ, A
+	return
+	
+;Generación de número aleatorio-------------------------------------------------
+generanumero
+    genPRN					 ; seed (non-zero) is in rand 
+    movf    rand, W, A			      ; W = R (use to accumulate XOR)
+    movwf   t_rand				    ; T = R (holds shifted result)
+    rlcf     t_rand,F
+    rlcf     t_rand,F				    ; T(7) = R(5)
+    xorwf   t_rand,W				    	  ; W(7) = W(7)^R(5) (= R(7)^R(5))
+    rlcf     t_rand,F			               ; T(7) = R(4)
+    xorwf   t_rand,W				  ; W(7) = W(7)^R(4) (= R(7)^R(5)^R(4))
+    rlcf     t_rand,F				         ; T(7) = R(3)
+    xorwf   t_rand,W			     ; W(7) = W(7)^R(3) (= R(7)^R(5)^R(4)^R(3))
+    addlw   b'10000000'				     ; carry = W(7) = R(7)^R(5)^R(4)^R(3)
+    rlcf     rand, F			       ; rotate carry (xor'ed result) into rand
+    movff rand, rand2
+    return					 ; to generate next pseudo-random number in sequence
+    
+    
+
+
+;-------------------------------------------------------------------------------
+;Rutina de abort ------------------------------------------------------------
+abort
+  bcf INTCON, .0, A ;apaga la bandera de interrupción
+  clrf 0x13, A ;limpia los puntos acumulados
+  clrf 0x14, A ;limpia los puntos acumulados
+  call DispTacha ;se llama a rutina de perder
+  retfie
+ 
+;Guardado de secuencias de LEDs-------------------------------------------------
+guardasecuencia
+  secuencia1
+  movlw .1
+  subwf aux, W, A ;resta el aux - WREG 
+  btfss STATUS, Z, A
+  goto secuencia2
+  goto seq1bien
+ 
+  
+  seq1bien
+  movff SEQ, seq1;copia SEQ a seq1
+  clrf SEQ, A
+  return
+  
+  secuencia2
+  movlw .2
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia3
+  goto seq2bien
+  
+  seq2bien
+  movff SEQ, seq2
+  clrf SEQ, A
+  return
+  
+  secuencia3
+  movlw .3
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia4
+  goto seq3bien
+  
+  seq3bien
+  movff SEQ, seq3
+  clrf SEQ, A
+  return
+  
+  secuencia4
+  movlw .4
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia5
+  goto seq4bien
+  
+  seq4bien
+  movff SEQ, seq4
+  clrf SEQ, A
+  return
+  
+  secuencia5
+  movlw .5
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia6
+  goto seq5bien
+  
+  seq5bien
+  movff SEQ, seq5
+  clrf SEQ, A
+  return
+  
+  secuencia6
+  movlw .6
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia7
+  goto seq6bien
+  
+  seq6bien
+  movff SEQ, seq6
+  clrf SEQ, A
+  return
+  
+  secuencia7
+  movlw .7
+ subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia8
+  goto seq7bien
+  
+  seq7bien
+  movff SEQ, seq7
+  clrf SEQ, A
+  return
+  
+  secuencia8
+  movlw .8
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia9
+  goto seq8bien
+  
+  seq8bien
+  movff SEQ, seq8
+  clrf SEQ, A
+  return
+  
+  secuencia9
+  movlw .9
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  goto secuencia10
+  goto seq9bien
+  
+  seq9bien
+  movff SEQ, seq9
+  clrf SEQ, A
+  return
+  
+  secuencia10
+  movlw .10
+  subwf aux, W, A
+  btfss STATUS, Z, A
+  call DispCirculo
+  goto seq10bien
+  
+  seq10bien
+  movff SEQ, seq10
+  clrf SEQ, A
+  return
+  
+;Guardado de secuencias de botones-------------------------------------------------
+guardabotones1
+  call checkboton1 ;rutina para leer que botón se presiona 
+  movf seq1, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones ;limpiar registro botones
+  return
+  
+guardabotones2
+  call checkboton1
+  movf seq2, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones3
+  call checkboton1
+  movf seq3, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones4
+  call checkboton1
+  movf seq4, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+ 
+guardabotones5
+  call checkboton1
+  movf seq5, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones6
+  call checkboton1
+  movf seq6, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones7
+  call checkboton1
+  movf seq7, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones8
+  call checkboton1
+  movf seq8, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones9
+  call checkboton1
+  movf seq9, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+  
+guardabotones10
+  call checkboton1
+  movf seq10, W, A
+  subwf Botones, W, A
+  btfss STATUS, Z, A
+  goto DispTacha
+  call limpiabotones
+  return
+;Calcular puntaje total---------------------------------------------------------
+;Cada que se gane una secuencia se debe poner en 1 su bandera d1=nivel 1 y asi
+    
+SumarPuntos 
+    clrf score
+    clrf WREG
+    btfsc d1
+    addlw 0x02
+    btfsc d2
+    addlw 0x02
+    btfsc d3
+    addlw 0x02
+    btfsc d4
+    addlw 0x02
+    btfsc d5
+    addlw 0x02
+    btfsc d6
+    addlw 0x02
+    btfsc d7
+    addlw 0x02
+    btfsc d8
+    addlw 0x02
+    btfsc d9
+    addlw 0x02
+    btfsc d10
+    addlw 0x02
+	
+    movwf score
+	
+; Hacer que se guarden en la EEPROM---------------------------------------------
+    HIGH_SCORE
+	clrf W, A
+	movf score, W
+	subwf H_score, W
+	btfsc STATUS, N, A
+	    goto Escribe_HighScore
+	    goto Nuevo
+		
+    Escribe_HighScore
+	movlw 0x00		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+	call New_HighscoreLCD
+		
+    Nuevo
+	movlw 0x03		    	
+	call MOV_EEADR
+	movf score_2, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x01		    	
+	call MOV_EEADR
+	movf score, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+
+	movlw 0x02		    	
+	call MOV_EEADR
+	movf score_1, W
+	call MOV_EEDATA
+	call WRITE_EEPROM
+	return
+;Calcular puntos----------------------------------------------------------------
+Puntaje
+    puntos0
+	movlw .0
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos2
+	    movlw '0'
+	    call Escribir
+	    return
+    
+    puntos2
+	movlw .2
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos4
+	    movlw '2'
+	    call Escribir
+	    return
+	    
+    puntos4
+	movlw .4
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos6
+	    movlw '4'
+	    call Escribir
+	    return
+	    
+    puntos6
+	movlw .6
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos8
+	    movlw '6'
+	    call Escribir
+	    return
+	    
+    puntos8
+	movlw .8
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos10
+	    movlw '8'
+	    call Escribir
+	    return
+	    
+    puntos10
+	movlw .10
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos12
+	    movlw '1'
+	    call Escribir
+	    movlw '0'
+	    call Escribir
+	    return
+	    
+    puntos12
+	movlw .12
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos14
+	    movlw '1'
+	    call Escribir
+	    movlw '2'
+	    call Escribir
+	    return
+	    
+    puntos14
+	movlw .14
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos16
+	    movlw '1'
+	    call Escribir
+	    movlw '4'
+	    call Escribir
+	    return
+	    
+    puntos16
+	movlw .16
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos18
+	    movlw '1'
+	    call Escribir
+	    movlw '6'
+	    call Escribir
+	    return
+	    
+    puntos18
+	movlw .18
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos20
+	    movlw '1'
+	    call Escribir
+	    movlw '8'
+	    call Escribir
+	    return
+	    
+    puntos20
+	movlw .20
+	subwf score, W
+	btfss STATUS, Z, A
+	    goto puntos0
+	    movlw '2'
+	    call Escribir
+	    movlw '0'
+	    call Escribir
+	    return
+	    
+;Mostrar puntos en LCD-------------------------------------------------
+scoreLCD
+    ;movlw b'00000001' 
+    ;call Configuracion
+    ;movlw b'10000000' 
+    ;call Configuracion
+    movlw 'L' 
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw ':'
+    call Escribir
+    call Puntaje
+    return
+    
+scoreLCD2
+    ;movlw b'00000001' 
+    ;call Configuracion
+    ;movlw b'10000000' 
+    ;call Configuracion
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw ':'
+    call Escribir
+    call Puntaje
+    return
+;Configuraciones de la EEPROM--------------------------------------    
+MOV_EEADR
+    movwf EEADR, A ;dirección donde se va a guardar el dato en la EEPROM
+    return
+    
+MOV_EEDATA 
+    movwf EEDATA, A ;el dato que se va a guardar 
+    return
+    
+WRITE_EEPROM
+    movlw b'00000100'	    ; Habilita el poder escibir
+    movwf EECON1, A  ;
+    movlw 0x55		    ; Empieza protocolo de EECON2
+    movwf EECON2, A
+    movlw 0xAA
+    movwf EECON2, A	    ; Termina protocolo	
+    bsf EECON1, WR, A	    ; Empieza a escribir (enable)
+waitwrite
+    btfsc EECON1, WR, A   ;WR EEPROM busy flag bit 1 EECON1
+	goto waitwrite
+	bcf EECON1, .2, A
+    clrf EEDATA, A	    ; Solo para verificar que se cargue el dato
+    
+    bsf EECON1, 0, A ;Deshabilita lecturas de la EEPROM
+    movff EEDATA, 0x26; se utilizó para pruebas
+    return     
+    
+;Limpiar todos los registros para iniciar de nuevo---------------------------
+Reinicio
+    clrf aux, A
+    clrf WREG, A
+    clrf SEQ, A
+    clrf Botones, A
+    clrf rand, A
+    clrf rand2, A
+    clrf conttimeout, A
+    clrf 0x13, A
+    clrf 0x14, A
+    clrf 0x21, A
+    clrf 0x22, A
+    clrf 0x23, A
+    clrf 0x24, A
+    clrf 0x25, A
+    clrf seq1, A
+    clrf seq2, A
+    clrf seq3, A
+    clrf seq4, A
+    clrf seq5, A
+    clrf seq6, A
+    clrf seq7, A
+    clrf seq8, A
+    clrf seq9, A
+    clrf seq10, A
+    return
+    
+campeon
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'C' 
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'M'
+    call Escribir
+    movlw 'P'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'N'
+    call Escribir
+    movlw '!'
+    call Escribir
+    movlw '!'
+    call Escribir
+    movlw '!'
+    call Escribir
+    call Retardo2
+    return
+
+LeerEEPROM
+    movlw 0x00		    ; Esta leyendo la posicion 0x00 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x25
+
+    movlw 0x01		    ; Esta leyendo la posicion 0x01 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x22
+    return    
+    
+    movlw 0x02		    ; Esta leyendo la posicion 0x02 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x23
+    
+    movlw 0x03		    ; Esta leyendo la posicion 0x03 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x24
+return
+
+Menu_Highscore
+    call HighscoreLCD
+    movlw b'11000000' 
+    call Configuracion
+    movff score_1, score
+    call scoreLCD
+    call Retardo2 
+     movlw b'11000000' 
+    call Configuracion
+    movff score_2, score
+    call scoreLCD
+    call Retardo2 
+     movlw b'11000000' 
+    call Configuracion
+    movff score_3, score
+    call scoreLCD
+    call Retardo2 
+return 
+
+HighscoreLCD
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw ':'
+    call Escribir
+    movff H_score, score
+    call Puntaje
+return
+   
+New_HighscoreLCD
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw '>' 
+    call Escribir
+    movlw 'N'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'W'
+    call Escribir
+    movlw ' '
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    movff H_score, score
+    call Puntaje
+    return
+    
+contadortimeout
+incf conttimeout ; usamos timer1, lo mas alto es para 1/2 segundo
+movlw .12 ;se tiene que desbordar 12 veces para que pasen 6 segundos
+subwf conttimeout, W, A
+btfss STATUS, Z, A
+goto resetTMR1
+call timeout
+
+resetTMR1
+bcf PIR1, 0, A ;se apaga la bandera de interrupción
+retfie
+
+timeout
+    bcf PIR1, 0, A ;se apaga la bandera de interrupción
+    movlw b'00000001' 
+    call Configuracion
+    movlw b'10000000' 
+    call Configuracion
+    movlw 'T' 
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'M'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'U'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '!'
+    call Escribir
+    call DispTacha
+return
+
+iniciatimeout
+movlw b'00001011' ;alto
+movwf TMR1H, A
+movlw b'11011100';pone 3036 en timer 1 para inciarlo y que el retardo sea de 1 segundo (bajo)
+movwf TMR1L, A
+bsf T1CON, .0, A ;inicia el timer 1
+return
+    
+reiniciatimeout
+clrf conttimeout 
+bcf T1CON, .0, A
+return
+    
+final
+end
