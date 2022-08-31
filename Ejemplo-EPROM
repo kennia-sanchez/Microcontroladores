@@ -1,0 +1,149 @@
+    #include "p18f45k50.inc"
+    org 0x00
+    #define score 0x21, A
+    #define score_1 0x22, A
+    #define score_2 0x23, A
+    #define score_3 0x24, A
+    ; EEPROM -> 0x00	-> score 1
+    ; EEPROM -> 0x01	-> score 2
+    ; EEPROM -> 0x02	-> score 3
+    ; Registro -> 0x30	-> Guardar los datos de la EEPROM
+    
+   
+    movlw .10
+    movwf score
+    
+    movlw 0x02		    	
+    call MOV_EEADR
+    movf score, W
+    call MOV_EEDATA
+    call WRITE_EEPROM
+    goto start
+    
+start
+    
+    Revisar_Score
+	SCORE_1			    ; Compara si la posicion 0x00 esta ocupada
+	    call READ_EEPROM1
+	    movlw 0xFF
+	    subwf score_1, W
+	    btfsc STATUS, Z, A
+		goto Escribe_score1
+		goto SCORE_2
+	    
+	Escribe_score1
+	    movlw 0x00		    ; Escribe en la posicion 0x00 de la EEPROM
+	    call MOV_EEADR
+	    movf score, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+	    
+	SCORE_2			    ; Compara si la posicion 0x01 esta ocupada
+	    call READ_EEPROM2
+	    movlw 0xFF
+	    subwf score_2, W
+	    btfsc STATUS, Z, A
+		goto Escribe_score2
+		goto SCORE_3
+	    
+	Escribe_score2
+	    movlw 0x01		    ; Escribe en la posicion 0x01 de la EEPROM
+	    call MOV_EEADR
+	    movf score, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+	 
+	SCORE_3			    ; Compara si la posicion 0x02 esta ocupada
+	    call READ_EEPROM2
+	    movlw 0xFF
+	    subwf score_3, W
+	    btfsc STATUS, Z, A
+		goto Escribe_score3
+		goto MOVER1
+	    
+	Escribe_score3
+	    movlw 0x02		    ; Escribe en la posicion 0x02 de la EEPROM
+	    call MOV_EEADR
+	    movf score, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+	    
+	MOVER1			    ; Mueve el score 1 al score 2
+	    movlw 0x01		    ; Escribe score 1 en la posicion 0x01
+	    call MOV_EEADR
+	    movf score_1, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+	    
+	    movlw 0x02		    ; Escribe score 2 en la posicion 0x02
+	    call MOV_EEADR
+	    movf score_2, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+	    
+	    movlw 0x00		    ; Escribe score 3 en la posicion 0x00
+	    call MOV_EEADR
+	    movf score_3, W
+	    call MOV_EEDATA
+	    call WRITE_EEPROM
+    
+    
+    goto Final   
+    
+;EEPROM -----------------------------
+    
+READ_EEPROM1
+    movlw 0x00		    ; Esta leyendo la posicion 0x00 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x22
+    return
+
+READ_EEPROM2
+    movlw 0x01		    ; Esta leyendo la posicion 0x01 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x23
+    return    
+    
+READ_EEPROM3
+    movlw 0x02		    ; Esta leyendo la posicion 0x02 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x24
+    return 
+    
+MOV_EEADR
+    movwf EEADR, A
+    return
+    
+MOV_EEDATA 
+    movwf EEDATA, A
+    return
+    
+WRITE_EEPROM
+    movlw b'00000100'	    ; Habilita el Write
+    movwf EECON1, A 
+    movlw 0x55		    ; Empieza protocolo de EECON2
+    movwf EECON2, A
+    movlw 0xAA
+    movwf EECON2, A	    ; Termina protocolo
+    bsf EECON1, WR, A	    ; Empieza a escribir
+    
+waitwrite
+    btfsc EECON1, WR, A
+	goto waitwrite
+	bcf EECON1, .2, A
+    clrf EEDATA, A	    ; Solo para verificar que se cargue el dato
+    
+    bsf EECON1, 0, A
+    movff EEDATA, 0x21
+    return
+    
+Final
+    end
+
+
