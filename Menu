@@ -1,0 +1,166 @@
+#include "p18f45k50.inc"
+org 0x00   
+    #define RS LATC, 0, A
+    #define E LATC, 2, A
+    #define RW LATC, 1, A
+    #define dataLCD LATA, A
+    Cont1 EQU 0x30
+    Cont2 EQU 0x31
+    Cont3 EQU 0x32
+goto start
+org 0x20
+    
+start
+    movlb .15
+    call Retardo
+    clrf ANSELA,BANKED
+    clrf ANSELB,BANKED
+    clrf ANSELC,BANKED
+    clrf TRISA, A
+    clrf TRISB, A
+    clrf TRISC, A
+    clrf LATC, A
+
+ComandosLCD
+    call Retardo
+    call esperaLCD
+    movlw b'00111000' 
+    call Configuracion
+    movlw b'00001100' 
+    call Configuracion
+    movlw b'00000110' 
+    call Configuracion
+    call Menu
+    goto Revisar
+     
+loop goto loop
+    
+Menu
+    call Retardo
+    movlw b'10000000' 
+    call Configuracion
+    movlw b'10000001'
+    call Configuracion
+    movlw '>' 
+    call esperaLCD
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw 'A'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'T'
+    call Escribir
+    movlw '<'
+    call Escribir
+    ;---------------------
+    movlw b'11000000'
+    call Configuracion
+    movlw '>'
+    call esperaLCD
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw 'I'
+    call Escribir
+    movlw 'G'
+    call Escribir
+    movlw 'H'
+    call Escribir
+    movlw '-'
+    call Escribir
+    movlw 'S'
+    call Escribir
+    movlw 'C'
+    call Escribir
+    movlw 'O'
+    call Escribir
+    movlw 'R'
+    call Escribir
+    movlw 'E'
+    call Escribir
+    movlw '<'
+    call Escribir
+    goto Revisar
+    return
+
+High_Score
+    movlw 0x00		    ; Esta leyendo la posicion 0x00 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x22
+    return
+
+    movlw 0x01		    ; Esta leyendo la posicion 0x01 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x23
+    return    
+    
+    movlw 0x02		    ; Esta leyendo la posicion 0x02 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x24
+    return
+    
+    movlw 0x03		    ; Esta leyendo la posicion 0x03 de la EEPROM
+    call MOV_EEADR
+    clrf EECON1
+    bsf EECON1, 0, A
+    movff EEDATA, 0x24
+    return
+	    
+	MOVLW b'00000001' ; Clearing display
+	call Configuracion
+	MOVLW b'10000000' ; setcursor
+	call Configuracion	
+	MOVLW 'C' ; Write
+	call Escribir
+	MOVLW 'A' ; Write
+	call Escribir
+	MOVLW 'M' ; Write
+	call Escribir
+	MOVLW 'P' ; Write
+	call Escribir
+	MOVLW 'E' ; Write
+	call Escribir
+	MOVLW 'O' ; Write
+	call Escribir
+	MOVLW 'N'; Write
+	call Escribir
+	MOVLW ':' ; Write
+	call Escribir
+	MOVLW b'11000010' ; setcursor
+	call Configuracion	
+	movf score_1
+	call Escribir
+;--------------------------------------------------------------
+Configuracion
+    bcf RS 
+    bcf RW 
+    goto Enable
+    
+Escribir 
+    bsf RS 
+    bcf RW                                      
+    
+Enable
+    bsf E 
+    movwf dataLCD  
+    call Retardo
+    bcf E 
+    call esperaLCD 
+    return
+     
+esperaLCD
+    setf TRISA, A
+
+
+final
+    end
