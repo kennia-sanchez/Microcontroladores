@@ -1,0 +1,65 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+#define RS LATA, 1, A ; bit para controlar el funcionamiento del LCD
+#define E LATA, 2, A ; bit para controlar el funcionamiento del LCD
+#define RW LATA, 3, A ; bit para controlar el funcionamiento del LCD
+#define aLCD LATD, A
+    
+goto start
+
+start
+    clrf TRISA, A ; se limpia el puerto A como salida // donde se conectan las líneas de comando
+    clrf TRISD, A ; se limpia el puerto D como salida // donde se conectan las transmisiones de datos
+
+ComandosLCD
+    movlw b'00111000' ; function set // bit 4 (DL:1 -> 8 bit interface) bit 3 (N:1 -> 2 lines ) bit 2 (F:0 -> 5x7 dots)
+    call Configuracion
+    movlw b'00001111' ; display on/off // bit 2 (D:1 -> display on) bit 1 (C:1 -> cursor on) bit 0 (B:1-> cursor blink on)
+    call Configuracion
+    movlw b'00000110' ; entry mode // bit 1 (I/D:1 -> increment cursor position) bit 0 (S:0 ->display shift)
+    call Configuracion
+    movlw b'00000001' ; clear display // así es de cajon la configuración
+    call Configuracion
+    movlw b'11000100' ; se pone el DDRAM, memoria de la posiscion 5 en donde se escriben en el LCD
+    call Configuracion
+    movlw 'c' ; mover la letra c al WREG y luego llamar la funcion escribir (vista en clase) para escribir el dato en el LCD
+    call Escribir
+    movlw b'11000101' ; se pone el DDRAM, memoria de la posiscion 6 en donde se escriben en el LCD
+    call Configuracion
+    movlw '4'
+    call Escribir
+    
+loop goto loop
+
+Configuracion
+    bcf RS ; pone en 0 RS (limpia)
+    bcf RW ; pone en 0 RW (limpia)
+    bsf E ; pone en 1 E (activa)
+    movwf aLCD ; mueve lo de WREG al aLCD
+    nop
+
+    bcf E ; pone en 0 E (limpia)
+    call esperaLCD ; para consumir tiempo y darle chanza al LCD de responder
+    return
+
+Escribir ; para escritura de datos en LCD se debe cargar valores de RS, R/W y activar el bit Enable
+    ; se carga el puerto con los datos
+    ; se agrega Nop para aseguar tiempo y se desactiva al final el enbale
+    bsf RS ; pone en 1 RS (activa)
+    bcf RW ; pone en 0 RW (limpia)
+    bsf E ; pone en 1 E (activa)
+    movwf aLCD ; mueve lo de WREG al LCD
+    nop
+    bcf E ; pone en 0 E (limpia)
+    call esperaLCD ; para consumir tiempo y darle chanza al LCD de responder
+    return
+    
+
+esperaLCD
+    nop
+    return
+
+    end
+
+
