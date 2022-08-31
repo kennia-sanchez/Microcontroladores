@@ -1,0 +1,75 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+    #define RS LATD, 1, A
+    #define E LATD, 2, A
+    #define RW LATD, 3, A
+    #define dataLCD LATB,A
+    
+goto start
+org 0x20
+    
+start
+    clrf TRISD,A
+    clrf TRISB,A
+    clrf ANSELD,A
+    clrf ANSELB,A
+    
+    call configurar
+    call escribir
+    goto final
+    
+configurar
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'00000110'
+    movwf dataLCD
+    bcf RS
+    bsf RW
+    
+ ocupado  
+    btfss PORTB,.7,A
+    goto conf2
+    goto ocupado
+    
+conf2	
+    bcf RS
+    bcf RW
+    movlw b'00111000'
+    movwf dataLCD
+    bcf E
+    return
+    
+escribir
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'00000001'
+    movwf dataLCD
+    bcf RS
+    bcf RW
+    movlw b'10000110'
+    movwf dataLCD
+    bsf RS
+    bcf RW
+    movlw 'H'
+    movwf dataLCD
+    movlw 'o'
+    movwf dataLCD
+    bcf RS
+    bcf RW
+    movlw b'11001000'
+    movwf dataLCD
+    bsf RS
+    bcf RW
+    movlw 'L'
+    movwf dataLCD
+    movlw 'a'
+    movwf dataLCD
+    return
+
+final
+    end
+
+
