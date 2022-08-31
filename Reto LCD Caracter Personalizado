@@ -1,0 +1,282 @@
+#include "p18f45k50.inc"
+org 0x00
+    
+    #define RS LATD, 1, A
+    #define E LATD, 2, A
+    #define RW LATD, 3, A
+    #define dataLCD LATB,A
+    
+goto start
+org 0x20
+    
+start
+    movlb .15
+    clrf TRISD,A
+    clrf TRISB,A
+    clrf ANSELD,BANKED
+    clrf ANSELB,BANKED
+    
+    call configurar
+    call personalizar
+    goto mostrar
+    goto final
+    
+configurar
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'00111000'
+    movwf dataLCD
+    bcf E
+    call pausa	
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'00000110'
+    movwf dataLCD
+    bcf E
+    call pausa
+    return
+
+personalizar 
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'01000000' ;espacio 0 CGRAM para carácter personalizado
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000100' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000100' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000100' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa			;fin primer carácter
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00001000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00001000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000100' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000011' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa		    ;fin segundo carácter
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000010' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000010' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000100' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00011000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw b'00000000' 
+    movwf dataLCD
+    bcf E
+    call pausa		    ;fin tercer carácter
+    return
+    
+mostrar
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'00000001'
+    movwf dataLCD
+    bcf E
+    call pausa		    ;limpiar LCD
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'10000111'
+    movwf dataLCD
+    bcf E
+    call pausa		    ;posiciona cursor linea 1 posición 8
+    bsf RS
+    bcf RW
+    bsf E
+    movlw 0
+    movwf dataLCD	    ;escribe el carácter guardado en el primer espacio de la CGRAM
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw 0
+    movwf dataLCD
+    bcf E
+    call pausa
+    bcf RS
+    bcf RW
+    bsf E
+    movlw b'11000111'
+    movwf dataLCD
+    bcf E
+    call pausa		    ;posiciona cursor linea 2 posición 8
+    bsf RS
+    bcf RW
+    bsf E
+    movlw 1
+    movwf dataLCD	    ;escribe el carácter guardado en el segundo espacio de la CGRAM
+    bcf E
+    call pausa
+    bsf RS
+    bcf RW
+    bsf E
+    movlw 2
+    movwf dataLCD	    ;escribe el carácter guardado en el tercer espacio de la CGRAM
+    bcf E
+    call pausa
+    goto final
+    
+pausa
+    nop
+    nop
+    return
+
+final    
+end
+
+
+
+
+
