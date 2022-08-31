@@ -1,0 +1,206 @@
+#include <p18f45k50.inc>
+    org 0x00
+    cont_pausa EQU 0x21
+    cont_v EQU 0x22
+    goto start
+    
+    org 0x08
+	checkPAUSA
+	btfss PORTC, 7, A
+	goto checkRESET
+	goto int_PAUSA
+
+	checkRESET
+	btfss PORTC, 6, A
+	goto checkV_INC
+	goto int_RESET
+
+	checkV_INC
+	btfss PORTC, 5, A
+	goto checkPAUSA
+	goto checkV_INC
+    
+    org 0x40
+    start
+    ;conf puertos
+    movlb .15
+    clrf ANSELC, BANKED
+    clrf ANSELD, BANKED
+    setf TRISC, A
+    clrf TRISD, A
+    clrf LATD, A
+    
+    ;conf interrupts
+    bsf RCON, 7, A	    ; IPEN = 1
+    bsf INTCON2, 0, A	    ; IOCIP = 1	ALTA PRIORIDAD
+    movlw b'11001000'
+    movwf INTCON, A
+    movlw b'11100000'
+    movwf IOCC, A	    ; HABILITA TODOS LOS PINES DEL PUERTO C CON IOC
+    ; IOCC7 = PAUSA	/   IOCC6 = RESET   /	IOCC5 = INCREMENTO VELOCIDAD 
+    
+    ;conf timer 2
+    clrf T2CON, A	    ; POST SCALE: 1 / PRE SCALE: 1:1 / OFF
+    setf PR2, A		    
+    
+    clrf cont_v, A
+    clrf cont_pausa , A
+    
+    call v_1s		    ; VELOCIDAD DEFAULT
+    
+    loop goto loop
+    
+; --------- PAUSA ------------
+    int_PAUSA
+    incf cont_pausa, F, A
+    
+    pausa
+    movlw .1
+    subwf cont_pausa, W, A
+    btfss STATUS, Z, A
+    goto play
+    goto pausa
+    
+    play
+    clrf cont_pausa, A
+    retfie
+
+; -------- RESET -------------
+    int_RESET
+    bcf T2CON, A
+    clrf TMR2, A
+    retfie
+    
+; --------- INCREMENTO VELOCIDAD -----------    
+    v_INC
+    incf cont_v, F, A
+    
+    checkV1
+    movlw .1
+    subwf cont_v, W, A
+    btfss STATUS, Z, A
+    goto checkV2
+    call v_750ms
+    
+    checkV2
+    movlw .2
+    subwf cont_v, W, A
+    btfss STATUS, Z, A
+    goto checkV3
+    call v_500ms
+    
+    checkV3
+    movlw .3
+    subwf cont_v, W, A
+    btfss STATUS, Z, A
+    goto checkV4
+    call v_250ms
+    
+    checkV4
+    movlw .4
+    subwf cont_v, W, A
+    btfss STATUS, Z, A
+    goto checkV0
+    call v_MAX
+    
+    checkV0
+    clrf cont_v
+    retfie  ; sale de interrupcion por lo que regresa a desplegar la cuenta en la velocidad default
+    
+; --------- VELOCIDADES ---------    
+    v_1s    ;V0
+    bsf T2CON, 2, A	    ; TIMER2 ON
+    movff TMR2, LATD
+    bcf T2CON, 2, A	    ; TIMER2 OFF
+    call delay_1000ms
+    goto v_1s
+    return
+    
+    v_750ms ;V1
+    bsf T2CON, 2, A	    ; TIMER2 ON
+    movff TMR2, LATD
+    bcf T2CON, 2, A	    ; TIMER2 OFF
+    call delay_500ms
+    call delay_250ms
+    return
+    
+    v_500ms ;V2
+    bsf T2CON, 2, A	    ; TIMER2 ON
+    movff TMR2, LATD
+    bcf T2CON, 2, A	    ; TIMER2 OFF
+    call delay_500ms
+    goto v_500ms
+    return
+    
+    v_250ms ;V3
+    bsf T2CON, 2, A	    ; TIMER2 ON
+    movff TMR2, LATD
+    bcf T2CON, 2, A	    ; TIMER2 OFF
+    call delay_250ms
+    goto v_250ms
+    return
+    
+    v_MAX   ;V4
+    bsf T2CON, 2, A	    ; TIMER2 ON
+    movff TMR2, LATD
+    bcf T2CON, 2, A	    ; TIMER2 OFF
+    call delay_TMR0
+    goto v_MAX
+    return
+
+; --------- DELAYS -------------    
+    delay_1000ms
+    movlw b'00000011'
+    movwf T0CON, A
+    movlw b'00001011'
+    movwf TMR0H, A
+    movlw b'11011100'
+    movwf TMR0L, A
+    bsf T0CON, 7, A
+    check1000ms
+    btfss INTCON, 2, A	    ;CHECAR TMR0IF
+	goto check1000ms
+    return
+    
+    delay_500ms
+    movlw b'00000010'
+    movwf T0CON, A
+    movlw b'00001011'
+    movwf TMR0H, A
+    movlw b'11011100'
+    movwf TMR0L, A
+    bsf T0CON, 7, A
+    check500ms
+    btfss INTCON, 2, A	    ;CHECAR TMR0IF
+	goto check500ms
+	bcf INTCON, 2, A
+    return
+    
+    delay_250ms
+    movlw b'00000001'
+    movwf T0CON, A
+    movlw b'00001011'
+    movwf TMR0H, A
+    movlw b'11011100'
+    movwf TMR0L, A
+    bsf T0CON, 7, A
+    check250ms
+    btfss INTCON, 2, A	    ;CHECAR TMR0IF
+	goto check250ms
+	bcf INTCON, 2, A
+    return
+    
+    delay_TMR0
+    clrf T0CON, A
+    clrf TMR0H, A
+    clrf TMR0L, A
+    bsf T0CON, 7, A
+    checkTMR0
+    btfss INTCON, 2, A
+	goto checkTMR0 
+	bcf INTCON, 2, A
+    return
+    
+    end
+
+
