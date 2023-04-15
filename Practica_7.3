@@ -1,0 +1,394 @@
+RADIX DEC
+PROCESSOR 18F45K50 
+#include "PIC18F45K50.INC"
+    
+;Declaración de variables 
+#define RS LATA, 0, A 
+#define E LATA, 1, A 
+#define Rw LATA, 2, A 
+#define dataLCD LATD,A 
+//#define RSERW LATA,A
+    
+VARIABLE1 EQU 0
+VARIABLE2 EQU 1 
+ 
+PSECT resetVec, class=CODE, reloc=2, abs
+ORG	  0	   
+    
+resetVec:  
+    ORG   32	       
+    GOTO  MAIN
+    
+ 
+CONFI: ;Subrutina de instrucciones de LCD para configuración 
+    CALL LEERBF ;Checar si el LCD está ocupado
+BSF E ;Se activa el enable
+BCF RS ;RS y RW = 0
+BCF Rw
+MOVWF dataLCD ;Escribe en el LCD
+ NOP
+BCF E ;Se desactiva el enable
+CALL LEERBF ;Checar si el LCD está ocupado 
+ RETURN
+ESCRIBE: ;Subrutina de instrucciones de LCD para escribir 
+    CALL LEERBF ;Checar si el LCD está ocupado
+BSF RS ;RS = 1 y RW = 0
+BCF Rw
+BSF E ;Se activa el enable
+MOVWF dataLCD ;Escribe el el LCD
+NOP
+BCF E ;Se desactiva el enable
+CALL LEERBF ;Checar si el LCD está ocupado 
+    RETURN
+LEERBF: ;Subrutina de instrucciones de LCD para leer busy flag
+MOVLB 15 
+    SETF TRISD,A
+    CLRF 0x50,A
+LEERBFF: 
+BCF RS
+BSF Rw
+BSF E
+MOVFF PORTD,0x50 ;Lee los bits del LCD 
+    NOP
+BCF E
+;Configuración del LCD como entrada
+;Configuración para leer el LCD
+;RS = 0 - RW = 1 
+    ;Activa el enable
+;Desactiva el enable
+BTFSC 0x50,7,A
+GOTO LEERBFF
+//CLRF ANSELD,BANKED ;Si no está activada configura el LCD como salida 
+CLRF TRISD,A
+CLRF LATD,A
+NOP
+BCF E
+RETURN
+    
+MAIN:
+MOVLB 15 ;Configuración de los puertos A, B y D como digitales
+;Checa si el busy flag está activada 
+    ;Si esta activada que vuelva a checar
+
+CLRF ANSELB,A //Puerto B -> Teclado matricial 
+CLRF ANSELA,A //Puerto A -> RS,RW y E del LCD 
+CLRF ANSELD,A //Puerto D -> Data del LCD
+CLRF TRISA,A //Configuración de los puertos A y D como salidas LATA
+CLRF TRISD,A
+CLRF LATD,A
+BCF INTCON2, 7,A
+MOVLW 0B00001111 ;Configuración del puerto B como salida/entrada 
+    MOVWF TRISB,A
+MOVWF WPUB,A //Resistencias pull-up
+CLRF 0x30,A
+CLRF 0x32,A
+CLRF 0x34,A ;Registro para el contador Div
+CLRF 0x36,A ;Registro para el contador
+CLRF 0x40,A ;Registro auxiliar para conversión de BIN -> ASCII 
+    MOVLW 48
+MOVWF 0x40,A
+CALL LEERBF ;Checar que el LCD esté libre 
+;-----------------------------------------Configuración del LCD-----------------------------------------
+;INTERFAZ 8 BITS, DOS LINEAS Y 5X8
+MOVLW 0B00111100
+CALL CONFI
+;ENCENDER EL DISPLAY, EL CURSOR Y EL PARPADEO 
+  MOVLW 0B00001111 ;Display on/off
+CALL CONFI
+;INCREMENTO HACIA LA DERECHA 
+  MOVLW 0B00000110 ;Entry mode set 
+  CALL CONFI
+;LIMPIAR DISPLAY Y ENVIAR HOME 
+  MOVLW 0B00000001 ;Clear display 
+  CALL CONFI
+MOVLW 0B00000010 ;Cursor home 
+  CALL CONFI
+
+ MOVLW 0x80 ;Set DDRAM
+CALL CONFI
+;--------------------------------Subrutina para checar el teclado matricial---------------------------- 
+CHECARF0:
+MOVLW 0B01111111 ;Primer caso de salida (FILA 0 y chequeo de cada columna) 
+ MOVWF LATB, A
+BTFSS PORTB,3,A 
+CALL UNO
+BTFSS PORTB,2,A 
+CALL DOS
+BTFSS PORTB,1,A
+CALL TRES
+BTFSS PORTB,0,A
+GOTO letraA
+MOVLW 0B10111111 ;Segundo caso de salida(FILA 1 y chequeo de cada columna)
+MOVWF LATB, A
+BTFSS PORTB,3,A 
+ CALL CUATRO 
+ BTFSS PORTB,2,A 
+ CALL CINCO 
+ BTFSS PORTB,1,A 
+ CALL SEIS
+BTFSS PORTB,0,A
+GOTO letraB
+MOVLW 0B11011111 ;Tercer caso de salida (FILA 2 y chequeo de cada columna) 
+ MOVWF LATB, A
+BTFSS PORTB,3,A 
+ CALL SIETE 
+ BTFSS PORTB,2,A 
+ CALL OCHO 
+ BTFSS PORTB,1,A 
+ CALL NUEVE 
+ BTFSS PORTB,0,A 
+ GOTO letraC
+
+ MOVLW 0B11101111 ;Cuarto caso de salida (FILA 3 y chequeo de cada columna)
+MOVWF LATB, A
+BTFSS PORTB,3,A 
+ GOTO IGUAL 
+ BTFSS PORTB,2,A 
+ CALL CERO 
+ BTFSS PORTB,1,A 
+ CALL GATO 
+ BTFSS PORTB,0,A 
+ GOTO letraD 
+ GOTO CHECARF0
+//---------------------------------- Subrutinas de las teclas numéricas -------------------------------- 
+UNO: ;Estructura de cada bóton númerico
+CALL DELAY ;Tiempo para dejar de presionar el botón 
+    MOVLW 1 ;Número representativo del teclado 
+    MOVWF 0x32, A ;Almacenamiento del número 
+    ADDWF 0x40,W,A
+CALL ESCRIBE
+RETURN ;Regresa al chequeo del teclado matricial 
+DOS:
+CALL DELAY 
+    MOVLW 2 
+    MOVWF 0x32, A 
+    ADDWF 0x40,W,A 
+    CALL ESCRIBE 
+    RETURN
+TRES:
+CALL DELAY
+MOVLW 3 
+    MOVWF 0x32, A 
+    ADDWF 0x40,W,A 
+    CALL ESCRIBE
+    RETURN
+CUATRO:
+CALL DELAY
+MOVLW 4 
+MOVWF 0x32, A
+ ADDWF 0x40,W,A 
+ CALL ESCRIBE 
+ RETURN
+CINCO:
+CALL DELAY
+MOVLW 5 
+MOVWF 0x32, A 
+ADDWF 0x40,W,A 
+CALL ESCRIBE 
+RETURN
+SEIS:
+CALL DELAY
+MOVLW 6
+MOVWF 0x32, A 
+ADDWF 0x40,W,A 
+CALL ESCRIBE 
+RETURN
+SIETE:
+CALL DELAY
+MOVLW 7 
+MOVWF 0x32, A 
+ADDWF 0x40,W,A 
+CALL ESCRIBE 
+RETURN
+OCHO:
+CALL DELAY
+MOVLW 8 
+MOVWF 0x32, A 
+ADDWF 0x40,W,A 
+CALL ESCRIBE 
+RETURN
+NUEVE:
+CALL DELAY
+MOVLW 9 
+MOVWF 0x32, A 
+ADDWF 0x40,W,A 
+CALL ESCRIBE 
+RETURN
+CERO:
+ CALL DELAY 
+ MOVLW 0 
+ MOVWF 0x32, A 
+ ADDWF 0x40,W,A 
+ CALL ESCRIBE 
+ RETURN
+;--------------------------------- Subrutinas de las teclas de operación ----------------------------- 
+letraA: ;Estructura de las operaciones
+CALL DELAY ;Tiempo para dejar de presionar el botón 
+    MOVLW '+' ;Manda es ASCII del símbolo de la operación 
+    CALL ESCRIBE ;Escribe el símbolo en la LCD
+CALL SUMA ;Subrutina de la operación
+letraB:
+CALL DELAY
+MOVLW '-' 
+    CALL ESCRIBE 
+    CALL RESTA
+letraC:
+CALL DELAY
+MOVLW '*' 
+    CALL ESCRIBE 
+    CALL MULT
+letraD:
+CALL DELAY
+MOVLW '/' 
+    CALL ESCRIBE 
+    CALL DIV
+GATO:
+CALL DELAY
+CALL RESETT
+;----------------------------------- Subrutinas de las operaciones ------------------------------------
+;---------------------------------------------------- SUMA ---------------------------------------------------- 
+SUMA:
+MOVFF 0X32,0x30 ;Guardamos el número presionado en 0x30 y ese será el primer número de nuestra operación
+CALL CHECARF0 ;Volvemos a checar todos los números
+MOVFF 0x32,WREG ;el 2do num a wreg
+ADDWF 0x30,F,A ;se realiza la operación y el resultado se guarda en 0x30
+
+ GOTO IGUAL2 ;Muestra el resultado
+;------------------------------------------------- RESTA ------------------------------------------------------ 
+RESTA:
+MOVFF 0X32,0x30 ;Guardamos el número presionado en 0x30 y ese será el primer número de nuestra operación
+CALL CHECARF0 ;Volvemos a checar todos los números 
+    MOVFF 0x32,WREG ;el 2do num a wreg
+SUBWF 0x30,F,A ;Realiza la resta y se guarda en 0x30 
+    BTFSC STATUS,4,A
+GOTO COMPLEMENTO ;Subrutina que muestra números negativos 
+REGRESAR:
+GOTO IGUAL2 ;Muestra el resultado 
+COMPLEMENTO:
+MOVFF 0x30,WREG 
+    COMF WREG,F,A 
+    ADDLW 1
+MOVFF WREG,0x30 
+    MOVLW '-'
+;aquí se escribe el menos porque si entra en esta subrutina quiere decir que el número es negativo.
+CALL ESCRIBE
+GOTO REGRESAR
+;------------------------------------------ MULTIPLICACIÓN --------------------------------------------- 
+MULT:
+MOVFF 0X32,0x30 ;Guardamos el número presionado en 0x30 y ese será el primer número de nuestra operación
+CALL CHECARF0 ;Volvemos a checar todos los números 
+    MOVFF 0x32,WREG ;el 2do num a wreg
+MULWF 0x30,A ;Realiza la multiplicación
+MOVFF PRODL,0x30 ;Mueve el resultado al 0x30
+GOTO IGUAL2 ;Muestra el resultado
+;------------------------------------------------- DIVISIÓN -------------------------------------------------- 
+DIV:
+CLRF 0x34,A ;Limpia el contador
+MOVFF 0X32,0x30 ;Guardamos el número presionado en 0x30 y ese será el primer número de nuestra operación
+CALL CHECARF0 ;Volvemos a checar todos los números 
+    MOVFF 0x32,0x36
+MOVFF 0x32,WREG
+TSTFSZ WREG,A
+
+ GOTO DIV2
+GOTO DIVENTRECERO 
+DIV2:
+MOVFF 0x36,WREG
+SUBWF 0x30,F,A 
+PROBARCERO:
+BTFSC STATUS,2,A
+GOTO ESCERO 
+PROBARNEG:
+BTFSC STATUS,4,A 
+    GOTO ESNEGATIVO 
+    CALL SUMARUNO 
+    GOTO DIV2
+SUMARUNO: 
+    MOVLW 1
+ADDWF 0x34,F,A
+RETURN 
+ESCERO:
+;0x34 es un contador
+CALL SUMARUNO 
+    MOVFF 0x034,0x030 
+    GOTO IGUAL2
+ESNEGATIVO:
+MOVFF 0x034,0x030
+GOTO IGUAL2
+DIVENTRECERO: ;Subrutina que muestra error. División entre 0
+MOVLW 'E' 
+    CALL ESCRIBE 
+    MOVLW 'R' 
+    CALL ESCRIBE 
+    MOVLW 'R' 
+    CALL ESCRIBE 
+    MOVLW 'O' 
+    CALL ESCRIBE 
+    MOVLW 'R' 
+    CALL ESCRIBE 
+    GOTO CHECAA
+;------------------------------------------------- RESET ---------------------------------------------------- 
+RESETT:
+;LIMPIAR DISPLAY Y ENVIAR HOME
+ MOVLW 0B00000001 ;Clear display 
+ CALL CONFI
+MOVLW 0B00000010 ;Cursor home 
+ CALL CONFI
+MOVLW 0x80 ;Set DDRAM 
+ CALL CONFI
+GOTO CHECARF0 ;Regresa al chequeo del teclado 
+ ;--------------------------------------------------- IGUAL ---------------------------------------------------- 
+IGUAL:
+CALL DELAY
+MOVLW '=' ;Manda el símbolo de la operación 
+    CALL ESCRIBE ;Escribe el símbolo
+MOVLW 0xC0 ;SET DDRAM
+CALL CONFI
+RETURN
+IGUAL2:
+CALL CONVIERTE ;Convierte el resultado en BCD porque la LCD solo representa valores en ascii.
+MOVFF 0x36, WREG ;Escribe las decenas 
+    ADDWF 0x40,W,A
+CALL ESCRIBE
+MOVFF 0x30, WREG ;Escribe las unidades 
+    ADDWF 0x40,W,A
+CALL ESCRIBE
+CHECAA: ;Subrutina para checar el reset 
+    MOVLW 0B11101111
+MOVWF LATB, A 
+    BTFSS PORTB,1,A 
+    GOTO GATO 
+    GOTO CHECAA
+;----------------------------------------------------- BCD ----------------------------------------------------- 
+CONVIERTE: ;Subrutina para tener las decenas y las unidades
+CLRF 0x36,A ;Limpia el contador
+RESTADOR: ;Resta de 10 en 10 para poder saber cuántas decenas hay en el resultado
+MOVLW 10
+SUBWF 0x30,F,A ;Resta 10 al resultado
+
+BTFSC STATUS,4,A ;Checa si la resta es negativa
+GOTO ULTIMO ;Si es negativa muestra que solo quedan las unidades 
+    GOTO SUMAUN
+SUMAUN: ;Suma un uno al contador, este contador serán las decenas 
+    INCF 0x36,F,A
+GOTO RESTADOR
+ULTIMO: ;Si la resta fue negativa significa que solo quedan las unidades
+MOVLW 10 ;Se regresan las unidades que se restaron 
+    ADDWF 0x30,F,A
+RETURN
+;----------------------------------------------------- DELAY --------------------------------------------------- 
+DELAY:
+MOVLW 0XFF 
+    MOVWF VARIABLE2,A
+    MOVWF VARIABLE1,A
+LOOP1:
+DECFSZ VARIABLE2,A 
+    GOTO LOOP1 
+    DECFSZ VARIABLE1,A
+    GOTO LOOP1 
+    CLRF WREG,A
+    RETURN
+    
+end resetVec 
+
+
