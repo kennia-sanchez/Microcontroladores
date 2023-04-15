@@ -1,0 +1,249 @@
+RADIX       DEC		    //Seleccionar decimal como base numerica
+    PROCESSOR   18F45K50	    //Seleccionar procesador a utilizar
+    #include    "pic18f45k50.inc"   //Incluir librerias de PIC18F45K50
+
+    Err	    EQU 0x32
+    DUTY    EQU 0x33
+    Aux	    EQU 0x34
+    LED	    EQU 0x35
+    Tim	    EQU 0x36
+  
+
+    PSECT resetVec, class=CODE, reloc=2, abs
+    ORG	    0	    
+    
+    
+resetVec:
+    ORG	    8
+    BTFSC   PIR1,5	
+    GOTO    INT_Routine	//Ir a la rutina si cumple condicion
+    ORG	    32	    //Guardar el programa desde el espacio de memoria 0020
+    GOTO    Start   
+    
+
+    
+Start:
+    MOVLB   15		//Mover el numero 15 al registro BSR			    
+    CLRF    Err,A	//Clear variables aux
+    CLRF    DUTY,A
+    CLRF    Aux,A
+    CLRF    LED,A
+    CLRF    Tim,A
+    
+    //LEDs
+    CLRF    ANSELB,B	//B -> Digital I/O
+    CLRF    TRISA,A	//A -> outputr
+    CLRF    TRISB,A	//b -> outputs
+    CLRF    LATA,A	//Turn off LEDs
+    CLRF    LATB,A	//Turn off LEDs
+    
+    //Config EUSART ASYNCHRONOUS RECEIVER
+    CLRF    ANSELC,B	//The analog I/O function of the RX/DT pin must be disabled by clearing the corresponding ANSEL bit.
+
+    MOVLW   0		//Decimal value to configure Baud rate 9600
+    MOVWF   SPBRGH1,A	//Move 0 to the register SPBRGH1 for the 9600 baud rate
+    MOVLW   23		//Decimal value to configure Baud rate 9600
+    MOVWF   SPBRG1,A	//Move 25 to the register SPBRG1 for the 9600 baud rate
+    
+    BSF	    TXSTA1,2,A	//BRGH = 1 - Enable high baud rate for 9600 bauds
+    BSF	    BAUDCON1,3,A//BRG16 = 0 - 8 bit mode enable
+    
+    BSF	    TRISC,7,A	//The RX/DT I/O pin must be configured as an input by setting the corresponding TRIS control bit
+    
+    BCF	    TXSTA1,4,A	//SYNC = 0 - Configures the EUSART for asynchronous operation
+    BSF	    RCSTA1,7,A	//SPEN = 1 - Enables the EUSART
+			//ENABLE INTERRUPTS
+    BSF	    IPR1,5,A	//RCIP = 1 - High priority interrupt
+    BSF	    PIE1,5,A	//RCIE = 1 - Enable RCIE interrupt bit
+    BSF	    INTCON,6,A	//PEIE/GIEL = 1 
+    BSF	    INTCON,7,A	//GIE/GIEH = 1 
+    
+    BSF	    RCSTA1,4,A	//CREN = 1 - Enables the receiver circuitry of the EUSART
+    
+    //TIMER
+    BCF	    INTCON,2,A	//Timer ready
+
+LOOP:
+    
+    GOTO    LOOP
+    
+configPWM:
+    BSF	    TRISC,2,A	//Configure bit 2 of C as input
+    MOVLW   100
+    MOVWF   PR2		//Configure period to 100%
+    MOVFF   DUTY,CCPR1L	//Configure duty cycle
+    MOVLW   12
+    MOVWF   CCP1CON
+    CLRF    TMR2
+    BSF	    T2CON,2,A
+    BCF	    TRISC,2,A
+    RETURN
+
+FramingError:
+    MOVFF   RCREG1,Err	//Clear framing error by reading the RCREG register
+    RETURN
+    
+OverrunError:
+    BCF	    RCSTA1,4,A	//CREN = 0 - Clear overrun error by clearing CREN receiver enable bit
+    BSF	    RCSTA1,4,A	//CREN = 1 - Enables the receiver circuitry of the EUSART
+    RETURN
+    
+INT_Routine:
+    BTG	    LATA,7,A
+    BTFSC   RCSTA1,2	//If FERR bit = 1 then framing error
+    CALL    FramingError
+    BTFSC   RCSTA1,1	//If OERR bit = 1 then overrun error
+    CALL    OverrunError
+    
+    MOVFF   RCREG1,Aux	//Show the 8 bits recieved in the LEDs
+
+    //Check if the received value is the keyboard key '1' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110001	//Substract the recieved value to the respective value of the key '1'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '1'
+    GOTO    one
+    //Check if the received value is the keyboard key '2' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110010	//Substract the recieved value to the respective value of the key '2'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '2'
+    GOTO    two
+    //Check if the received value is the keyboard key '3' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110011	//Substract the recieved value to the respective value of the key '3'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '3'
+    GOTO    three
+    //Check if the received value is the keyboard key '4' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110100	//Substract the recieved value to the respective value of the key '4'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '4'
+    GOTO    four
+    //Check if the received value is the keyboard key '5' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110101	//Substract the recieved value to the respective value of the key '5'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '5'
+    GOTO    five
+    //Check if the received value is the keyboard key '0' 
+    MOVF    Aux,W	//Move to WREG
+    SUBLW   0b01110000	//Substract the recieved value to the respective value of the key '0'
+    BTFSC   STATUS,2	//If the result is 0, then the received value is '0'
+    GOTO    zero
+    //If neither, then blink LED
+    CALL    TIMER500ms	//Turn on LED (0.5s)
+    CALL    LED500ms	//Turn off LED (0.5s)
+    CALL    LED500ms	//Turn on LED (0.5s)
+    CALL    LED500ms	//Turn on LED (0.5s)
+    BCF	    LATB,6,0	//Turn off LED
+INT_Routine_Skip:
+    CALL    configPWM
+    RETFIE
+    
+one:
+    MOVLW   20
+    MOVWF   DUTY	//Give Duty the value of 20%
+    MOVLW   0b00000001
+    MOVWF   LATB	//Turn on LED 0 to indicate the number 1
+    GOTO    INT_Routine_Skip
+    
+two:
+    MOVLW   40
+    MOVWF   DUTY	//Give Duty the value of 40%
+    MOVLW   0b00000011
+    MOVWF   LATB	//Turn on LEDs (0,1) to indicate the number 2
+    GOTO    INT_Routine_Skip
+    
+three:
+    MOVLW   60
+    MOVWF   DUTY	//Give Duty the value of 60%
+    MOVLW   0b00000111
+    MOVWF   LATB	//Turn on s (0,1,2) to indicate the number 3
+    GOTO    INT_Routine_Skip
+    
+four:
+    MOVLW   80
+    MOVWF   DUTY	//Give Duty the value of 80%
+    MOVLW   0b00001111
+    MOVWF   LATB	//Turn on LEDs (0,1,2,3) to indicate the number 4
+    GOTO    INT_Routine_Skip
+    
+five:
+    MOVLW   100
+    MOVWF   DUTY	//Give Duty the value of 100%
+    MOVLW   0b00011111
+    MOVWF   LATB	//Turn on LEDs (0,1,2,3,4) to indicate the number 5
+    GOTO    INT_Routine_Skip
+    
+zero:
+    MOVLW   0
+    MOVWF   DUTY	//Darle a Duty el valor de 0% (apagar LED)
+    MOVLW   0b00000000
+    MOVWF   LATB	//Turn off all LEDs to indicate the number 0
+    GOTO    INT_Routine_Skip
+    
+TIMER500ms:
+    MOVLW   0b00000000	//Configuraci?n -> 16 bits, PE2
+    MOVWF   T0CON,A	//Mover la configuraci?n al registro necesario (T0CON)
+    MOVLW   0x0B	//Inicio timer = 3036 = 0x0BDC -> 0x0B = 00001011
+    MOVWF   TMR0H,A	//Mover el inicio del timer del Byte m?s significativo a TMR0H
+    MOVLW   0xDC	//Inicio timer = 3036 = 0x0BDC -> 0xDC = 11011100
+    MOVWF   TMR0L,A	//Mover el inicio del timer del Byte menos significativo a TMR0L
+    NOP			//Asegurar tiempos
+    BSF	    T0CON,7,A	//Encender bit 7 de T0CON para indicar el encendido del Timer
+    
+LED500ms:
+    BTFSS   INTCON,2,A	//Checar la bandera para ver si el timer termin? (se desbord?)
+    BRA	    LED500ms	//Regresar a la rutina para verificar nuevamente la bandera
+    BTG	    LATB,6,0	//Invertir valor del LED para encender o apagar
+    BCF	    INTCON,2,A	//Apagar la bandera para dejar el timer listo para otra operaci?n
+    MOVLW   0x0B	//Inicio timer = 3036 = 0x0BDC -> 0x0B = 00001011
+    MOVWF   TMR0H,A	//Mover el inicio del timer del Byte m?s significativo a TMR0H
+    MOVLW   0xDB	//Inicio timer = 3035 = 0x0BDC -> 0xDC = 11011100
+    MOVWF   TMR0L,A	//Mover el inicio del timer del Byte menos significativo a TMR0L
+    RETURN
+    
+//
+// CONFIGURATION BITS SETTING, THIS IS REQUIRED TO CONFITURE THE OPERATION OF THE MICROCONTROLLER
+// AFTER RESET. ONCE PROGRAMMED IN THIS PRACTICA THIS IS NOT NECESARY TO INCLUDE IN FUTURE PROGRAMS
+// IF THIS SETTINGS ARE NOT CHANGED. SEE SECTION 26 OF DATA SHEET. 
+//   
+// CONFIG1L
+    CONFIG  PLLSEL = PLL4X        // PLL Selection (4x clock multiplier)
+    CONFIG  CFGPLLEN = OFF        // PLL Enable Configuration bit (PLL Disabled (firmware controlled))
+    CONFIG  CPUDIV = NOCLKDIV     // CPU System Clock Postscaler (CPU uses system clock (no divide))
+    CONFIG  LS48MHZ = SYS24X4     // Low Speed USB mode with 48 MHz system clock (System clock at 24 MHz, USB clock divider is set to 4)
+// CONFIG1H
+    CONFIG  FOSC = INTOSCIO       // Oscillator Selection (Internal oscillator) 
+    CONFIG  PCLKEN = ON           // Primary Oscillator Shutdown (Primary oscillator enabled)
+    CONFIG  FCMEN = OFF           // Fail-Safe Clock Monitor (Fail-Safe Clock Monitor disabled)
+    CONFIG  IESO = OFF            // Internal/External Oscillator Switchover (Oscillator Switchover mode disabled)
+// CONFIG2L
+    CONFIG  nPWRTEN = OFF         // Power-up Timer Enable (Power up timer disabled)
+    CONFIG  BOREN = SBORDIS       // Brown-out Reset Enable (BOR enabled in hardware (SBOREN is ignored))
+    CONFIG  BORV = 190            // Brown-out Reset Voltage (BOR set to 1.9V nominal)
+    CONFIG  nLPBOR = OFF          // Low-Power Brown-out Reset (Low-Power Brown-out Reset disabled)
+// CONFIG2H
+    CONFIG  WDTEN = OFF           // Watchdog Timer Enable bits (WDT disabled in hardware (SWDTEN ignored))
+    CONFIG  WDTPS = 32768         // Watchdog Timer Postscaler (1:3276?
+// CONFIG3H
+    CONFIG  CCP2MX = RC1          // CCP2 MUX bit (CCP2 input/output is multiplexed with RC1)
+    CONFIG  PBADEN = OFF          // PORTB A/D Enable bit (PORTB<5:0> pins are configured as analog input channels on Reset)
+    CONFIG  T3CMX = RC0           // Timer3 Clock Input MUX bit (T3CKI function is on RC0)
+    CONFIG  SDOMX = RB3           // SDO Output MUX bit (SDO function is on RB3)
+    CONFIG  MCLRE = ON            // Master Clear Reset Pin Enable (MCLR pin enabled; RE3 input disabled)
+// CONFIG4L
+    CONFIG  STVREN = ON           // Stack Full/Underflow Reset (Stack full/underflow will cause Reset)
+    CONFIG  LVP = ON              // Single-Supply ICSP Enable bit (Single-Supply ICSP enabled if MCLRE is also 1)
+    CONFIG  ICPRT = OFF           // Dedicated In-Circuit Debug/Programming Port Enable (ICPORT disabled)
+    CONFIG  XINST = OFF           // Extended Instruction Set Enable bit (Instruction set extension and Indexed Addressing mode disabled)
+//
+// DEFAULT CONFIGURATION FOR THE REST OF THE REGISTERS
+//
+    CONFIG  CONFIG5L = 0x0F	  // BLOCKS ARE NOT CODE-PROTECTED
+    CONFIG  CONFIG5H = 0xC0	  // BOOT BLOCK IS NOT CODE-PROTECTED
+    CONFIG  CONFIG6L = 0x0F	  // BLOCKS NOT PROTECTED FROM WRITING
+    CONFIG  CONFIG6H = 0xE0	  // CONFIGURATION REGISTERS NOT PROTECTED FROM WRITING
+    CONFIG  CONFIG7L = 0x0F	  // BLOCKS NOT PROTECTED FROM TABLE READS
+    CONFIG  CONFIG7H = 0x40	  // BOOT BLOCK IS NOT PROTECTED FROM TABLE READS
+    
+    END resetVec	//Terminar
+
+
